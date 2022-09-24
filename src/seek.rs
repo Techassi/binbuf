@@ -20,7 +20,7 @@ use crate::{
 /// assert_eq!(o, 2);
 /// ```
 pub fn try_seek_u16(
-    data: Vec<u8>,
+    data: &Vec<u8>,
     offset: &mut usize,
     endianness: Endianness,
 ) -> BinaryReadResult<u16> {
@@ -42,7 +42,7 @@ pub fn try_seek_u16(
 /// advancement of the offset would overflow the length of the `data`
 /// vector the function returns an error.
 pub fn try_seek_i16(
-    data: Vec<u8>,
+    data: &Vec<u8>,
     offset: &mut usize,
     endianness: Endianness,
 ) -> BinaryReadResult<i16> {
@@ -67,7 +67,7 @@ pub fn try_seek_i16(
 /// assert_eq!(n, 17752);
 /// assert_eq!(o, 2);
 /// ```
-pub fn seek_u16(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> u16 {
+pub fn seek_u16(data: &Vec<u8>, offset: &mut usize, endianness: Endianness) -> u16 {
     match try_seek_u16(data, offset, endianness) {
         Ok(n) => n,
         Err(err) => panic!("{}", err),
@@ -78,7 +78,7 @@ pub fn seek_u16(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> u1
 /// integer (`i16`) and advances the `offset` by [`U16_OCTETS`]. If the
 /// advancement of the offset would overflow the length of the `data`
 /// vector the function panics.
-pub fn seek_i16(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> i16 {
+pub fn seek_i16(data: &Vec<u8>, offset: &mut usize, endianness: Endianness) -> i16 {
     seek_u16(data, offset, endianness) as i16
 }
 
@@ -98,7 +98,7 @@ pub fn seek_i16(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> i1
 /// assert_eq!(o, 4);
 /// ```
 pub fn try_seek_u32(
-    data: Vec<u8>,
+    data: &Vec<u8>,
     offset: &mut usize,
     endianness: Endianness,
 ) -> BinaryReadResult<u32> {
@@ -120,7 +120,7 @@ pub fn try_seek_u32(
 /// advancement of the offset would overflow the length of the `data`
 /// vector the function returns an error.
 pub fn try_seek_i32(
-    data: Vec<u8>,
+    data: &Vec<u8>,
     offset: &mut usize,
     endianness: Endianness,
 ) -> BinaryReadResult<i32> {
@@ -145,7 +145,7 @@ pub fn try_seek_i32(
 /// assert_eq!(n, 1163411789);
 /// assert_eq!(o, 4);
 /// ```
-pub fn seek_u32(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> u32 {
+pub fn seek_u32(data: &Vec<u8>, offset: &mut usize, endianness: Endianness) -> u32 {
     match try_seek_u32(data, offset, endianness) {
         Ok(n) => n,
         Err(err) => panic!("{}", err),
@@ -156,7 +156,7 @@ pub fn seek_u32(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> u3
 /// integer (`i32`) and advances the `offset` by [`U32_OCTETS`]. If the
 /// advancement of the offset would overflow the length of the `data`
 /// vector the function panics.
-pub fn seek_i32(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> i32 {
+pub fn seek_i32(data: &Vec<u8>, offset: &mut usize, endianness: Endianness) -> i32 {
     seek_u32(data, offset, endianness) as i32
 }
 
@@ -176,7 +176,7 @@ pub fn seek_i32(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> i3
 /// assert_eq!(o, 8);
 /// ```
 pub fn try_seek_u64(
-    data: Vec<u8>,
+    data: &Vec<u8>,
     offset: &mut usize,
     endianness: Endianness,
 ) -> BinaryReadResult<u64> {
@@ -198,7 +198,7 @@ pub fn try_seek_u64(
 /// advancement of the offset would overflow the length of the `data`
 /// vector the function returns an error.
 pub fn try_seek_i64(
-    data: Vec<u8>,
+    data: &Vec<u8>,
     offset: &mut usize,
     endianness: Endianness,
 ) -> BinaryReadResult<i64> {
@@ -223,7 +223,7 @@ pub fn try_seek_i64(
 /// assert_eq!(n, 4996815586883028257);
 /// assert_eq!(o, 8);
 /// ```
-pub fn seek_u64(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> u64 {
+pub fn seek_u64(data: &Vec<u8>, offset: &mut usize, endianness: Endianness) -> u64 {
     match try_seek_u64(data, offset, endianness) {
         Ok(n) => n,
         Err(err) => panic!("{}", err),
@@ -234,7 +234,7 @@ pub fn seek_u64(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> u6
 /// integer (`i64`) and advances the `offset` by [`U64_OCTETS`]. If the
 /// advancement of the offset would overflow the length of the `data`
 /// vector the function panics.
-pub fn seek_i64(data: Vec<u8>, offset: &mut usize, endianness: Endianness) -> i64 {
+pub fn seek_i64(data: &Vec<u8>, offset: &mut usize, endianness: Endianness) -> i64 {
     match try_seek_u64(data, offset, endianness) {
         Ok(n) => n as i64,
         Err(err) => panic!("{}", err),
