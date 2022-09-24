@@ -11,10 +11,10 @@ use crate::{
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::try_put_u16(69, &mut v, binum::Endianness::Big).unwrap();
+/// let n = binum::try_write_u16(69, &mut v, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 2);
 /// ```
-pub fn try_put_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
+pub fn try_write_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
     if buf.len() < U16_OCTETS {
         return Err(BinaryError::new("Buf too short", BinaryErrorVariant::U16));
     }
@@ -41,11 +41,11 @@ pub fn try_put_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> Binary
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::put_u16(69, &mut v, binum::Endianness::Big);
+/// let n = binum::write_u16(69, &mut v, binum::Endianness::Big);
 /// assert_eq!(n, 2);
 /// ```
-pub fn put_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> usize {
-    match try_put_u16(value, buf, endianness) {
+pub fn write_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> usize {
+    match try_write_u16(value, buf, endianness) {
         Ok(n) => n,
         Err(err) => panic!("{}", err),
     }
@@ -59,10 +59,10 @@ pub fn put_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> usize {
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::try_put_u32(69, &mut v, binum::Endianness::Big).unwrap();
+/// let n = binum::try_write_u32(69, &mut v, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 4);
 /// ```
-pub fn try_put_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
+pub fn try_write_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
     if buf.len() < U32_OCTETS {
         return Err(BinaryError::new("Buf too short", BinaryErrorVariant::U32));
     }
@@ -93,11 +93,11 @@ pub fn try_put_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> Binary
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::put_u32(69, &mut v, binum::Endianness::Big);
+/// let n = binum::write_u32(69, &mut v, binum::Endianness::Big);
 /// assert_eq!(n, 4);
 /// ```
-pub fn put_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> usize {
-    match try_put_u32(value, buf, endianness) {
+pub fn write_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> usize {
+    match try_write_u32(value, buf, endianness) {
         Ok(n) => n,
         Err(err) => panic!("{}", err),
     }
@@ -111,10 +111,10 @@ pub fn put_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> usize {
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::try_put_u64(69, &mut v, binum::Endianness::Big).unwrap();
+/// let n = binum::try_write_u64(69, &mut v, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 8);
 /// ```
-pub fn try_put_u64(value: u64, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
+pub fn try_write_u64(value: u64, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
     if buf.len() < U64_OCTETS {
         return Err(BinaryError::new("Buf too short", BinaryErrorVariant::U64));
     }
@@ -153,11 +153,11 @@ pub fn try_put_u64(value: u64, buf: &mut [u8], endianness: Endianness) -> Binary
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::put_u64(69, &mut v, binum::Endianness::Big);
+/// let n = binum::write_u64(69, &mut v, binum::Endianness::Big);
 /// assert_eq!(n, 8);
 /// ```
-pub fn put_u64(value: u64, buf: &mut [u8], endianness: Endianness) -> usize {
-    match try_put_u64(value, buf, endianness) {
+pub fn write_u64(value: u64, buf: &mut [u8], endianness: Endianness) -> usize {
+    match try_write_u64(value, buf, endianness) {
         Ok(n) => n,
         Err(err) => panic!("{}", err),
     }
