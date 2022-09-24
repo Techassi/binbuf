@@ -5,6 +5,8 @@ mod put;
 mod read;
 mod seek;
 
+pub mod macros;
+
 pub use error::BinaryError;
 
 pub use endian::*;
