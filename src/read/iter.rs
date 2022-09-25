@@ -3,7 +3,7 @@ use crate::{
     BinaryReadResult, Endianness, U16_OCTETS, U32_OCTETS, U64_OCTETS,
 };
 
-/// Read `n` unsigned integers (`u16`) from from the byte slice `data`. This
+/// Read `n` unsigned integers (`u16`) from the byte slice `data`. This
 /// function returns an error when the provided `data` slice is too short
 /// (minimum length is `n` times [`U16_OCTETS`]). This function is especially
 /// usefull when dealing with multiple integers of the same kind in a row.
@@ -37,7 +37,7 @@ pub fn try_read_iter_u16(
     Ok(v)
 }
 
-/// Read `n` signed integers (`i16`) from from the byte slice `data`. This
+/// Read `n` signed integers (`i16`) from the byte slice `data`. This
 /// function returns an error when the provided `data` slice is too short
 /// (minimum length is `n` times [`U16_OCTETS`]). This function is especially
 /// usefull when dealing with multiple integers of the same kind in a row.
@@ -71,7 +71,7 @@ pub fn try_read_iter_i16(
     Ok(v)
 }
 
-/// Read `n` unsigned integers (`u16`) from from the byte slice `data`. This
+/// Read `n` unsigned integers (`u16`) from the byte slice `data`. This
 /// function panics when the provided `data` slice is too short (minimum length
 /// is `n` times [`U16_OCTETS`]). This function is especially usefull when
 /// dealing with multiple integers of the same kind in a row.
@@ -93,7 +93,7 @@ pub fn read_iter_u16(data: &[u8], n: usize, endianness: Endianness) -> Vec<u16> 
     }
 }
 
-/// Read `n` signed integers (`i16`) from from the byte slice `data`. This
+/// Read `n` signed integers (`i16`) from the byte slice `data`. This
 /// function panics when the provided `data` slice is too short (minimum length
 /// is `n` times [`U16_OCTETS`]). This function is especially usefull when
 /// dealing with multiple integers of the same kind in a row.
@@ -115,7 +115,7 @@ pub fn read_iter_i16(data: &[u8], n: usize, endianness: Endianness) -> Vec<i16> 
     }
 }
 
-/// Read `n` unsigned integers (`u32`) from from the byte slice `data`. This
+/// Read `n` unsigned integers (`u32`) from the byte slice `data`. This
 /// function returns an error when the provided `data` slice is too short
 /// (minimum length is `n` times [`U32_OCTETS`]). This function is especially
 /// usefull when dealing with multiple integers of the same kind in a row.
@@ -149,7 +149,7 @@ pub fn try_read_iter_u32(
     Ok(v)
 }
 
-/// Read `n` signed integers (`i32`) from from the byte slice `data`. This
+/// Read `n` signed integers (`i32`) from the byte slice `data`. This
 /// function returns an error when the provided `data` slice is too short
 /// (minimum length is `n` times [`U32_OCTETS`]). This function is especially
 /// usefull when dealing with multiple integers of the same kind in a row.
@@ -183,7 +183,7 @@ pub fn try_read_iter_i32(
     Ok(v)
 }
 
-/// Read `n` unsigned integers (`u32`) from from the byte slice `data`. This
+/// Read `n` unsigned integers (`u32`) from the byte slice `data`. This
 /// function panics when the provided `data` slice is too short (minimum length
 /// is `n` times [`U32_OCTETS`]). This function is especially usefull when
 /// dealing with multiple integers of the same kind in a row.
@@ -205,7 +205,7 @@ pub fn read_iter_u32(data: &[u8], n: usize, endianness: Endianness) -> Vec<u32> 
     }
 }
 
-/// Read `n` signed integers (`i32`) from from the byte slice `data`. This
+/// Read `n` signed integers (`i32`) from the byte slice `data`. This
 /// function panics when the provided `data` slice is too short (minimum length
 /// is `n` times [`U32_OCTETS`]). This function is especially usefull when
 /// dealing with multiple integers of the same kind in a row.
@@ -227,7 +227,7 @@ pub fn read_iter_i32(data: &[u8], n: usize, endianness: Endianness) -> Vec<i32> 
     }
 }
 
-/// Read `n` unsigned integers (`u64`) from from the byte slice `data`. This
+/// Read `n` unsigned integers (`u64`) from the byte slice `data`. This
 /// function returns an error when the provided `data` slice is too short
 /// (minimum length is `n` times [`U64_OCTETS`]). This function is especially
 /// usefull when dealing with multiple integers of the same kind in a row.
@@ -260,7 +260,7 @@ pub fn try_read_iter_u64(
     Ok(v)
 }
 
-/// Read `n` signed integers (`i64`) from from the byte slice `data`. This
+/// Read `n` signed integers (`i64`) from the byte slice `data`. This
 /// function returns an error when the provided `data` slice is too short
 /// (minimum length is `n` times [`U64_OCTETS`]). This function is especially
 /// usefull when dealing with multiple integers of the same kind in a row.
@@ -293,7 +293,7 @@ pub fn try_read_iter_i64(
     Ok(v)
 }
 
-/// Read `n` unsigned integers (`u64`) from from the byte slice `data`. This
+/// Read `n` unsigned integers (`u64`) from the byte slice `data`. This
 /// function panics when the provided `data` slice is too short (minimum length
 /// is `n` times [`U64_OCTETS`]). This function is especially usefull when
 /// dealing with multiple integers of the same kind in a row.
@@ -314,7 +314,7 @@ pub fn read_iter_u64(data: &[u8], n: usize, endianness: Endianness) -> Vec<u64> 
     }
 }
 
-/// Read `n` signed integers (`i64`) from from the byte slice `data`. This
+/// Read `n` signed integers (`i64`) from the byte slice `data`. This
 /// function panics when the provided `data` slice is too short (minimum length
 /// is `n` times [`U64_OCTETS`]). This function is especially usefull when
 /// dealing with multiple integers of the same kind in a row.
