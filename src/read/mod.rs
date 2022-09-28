@@ -17,10 +17,10 @@ pub use seek::*;
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::try_read_u16(&d[0..2], binum::Endianness::Big).unwrap();
+/// let n = binum::read::read_u16(&d[0..2], binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 17752);
 /// ```
-pub fn try_read_u16(data: &[u8], endianness: Endianness) -> BinaryReadResult<u16> {
+pub fn read_u16(data: &[u8], endianness: Endianness) -> BinaryReadResult<u16> {
     if data.len() < U16_OCTETS {
         return Err(BinaryError::new(
             "Slice of bytes too short",
@@ -42,38 +42,13 @@ pub fn try_read_u16(data: &[u8], endianness: Endianness) -> BinaryReadResult<u16
 
 /// Read two octets from the byte slice `data` as an signed integer (`i16`).
 /// This function returns an error when the provided `data` slice is too short
-/// (minimum length is [`U16_OCTETS`]). See [`try_read_u16`] for more
+/// (minimum length is [`U16_OCTETS`]). See [`read_u16`] for more
 /// information.
-pub fn try_read_i16(data: &[u8], endianness: Endianness) -> BinaryReadResult<i16> {
-    match try_read_u16(data, endianness) {
+pub fn read_i16(data: &[u8], endianness: Endianness) -> BinaryReadResult<i16> {
+    match read_u16(data, endianness) {
         Ok(n) => Ok(n as i16),
         Err(err) => Err(err),
     }
-}
-
-/// Read two octets from the byte slice `data` as an unsigned integer (`u16`).
-/// This function panics when the provided `data` slice is too short (minimum
-/// length is [`U16_OCTETS`]).
-///
-/// ### Example
-///
-/// ```
-/// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::read_u16(&d[0..2], binum::Endianness::Big);
-/// assert_eq!(n, 17752);
-/// ```
-pub fn read_u16(data: &[u8], endianness: Endianness) -> u16 {
-    match try_read_u16(data, endianness) {
-        Ok(n) => n,
-        Err(err) => panic!("{}", err),
-    }
-}
-
-/// Read two octets from the byte slice `data` as a signed integer (`i16`).
-/// This function panics when the provided `data` slice is too short (minimum
-/// length is [`U16_OCTETS`]). See [`read_u16`] for more information.
-pub fn read_i16(data: &[u8], endianness: Endianness) -> i16 {
-    read_u16(data, endianness) as i16
 }
 
 /// Read four octets from the byte slice `data` as an unsigned integer (`u32`).
@@ -84,10 +59,10 @@ pub fn read_i16(data: &[u8], endianness: Endianness) -> i16 {
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::try_read_u32(&d[0..4], binum::Endianness::Big).unwrap();
+/// let n = binum::read::read_u32(&d[0..4], binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 1163411789);
 /// ```
-pub fn try_read_u32(data: &[u8], endianness: Endianness) -> BinaryReadResult<u32> {
+pub fn read_u32(data: &[u8], endianness: Endianness) -> BinaryReadResult<u32> {
     if data.len() < U32_OCTETS {
         return Err(BinaryError::new(
             "Slice of bytes too short",
@@ -115,38 +90,13 @@ pub fn try_read_u32(data: &[u8], endianness: Endianness) -> BinaryReadResult<u32
 
 /// Read four octets from the byte slice `data` as an signed integer (`i32`).
 /// This function returns an error when the provided `data` slice is too short
-/// (minimum length is [`U32_OCTETS`]). See [`try_read_u32`] for more
+/// (minimum length is [`U32_OCTETS`]). See [`read_u32`] for more
 /// information.
-pub fn try_read_i32(data: &[u8], endianness: Endianness) -> BinaryReadResult<i32> {
-    match try_read_u32(data, endianness) {
+pub fn read_i32(data: &[u8], endianness: Endianness) -> BinaryReadResult<i32> {
+    match read_u32(data, endianness) {
         Ok(n) => Ok(n as i32),
         Err(err) => Err(err),
     }
-}
-
-/// Read four octets from the byte slice `data` as an unsigned integer (`u32`).
-/// This function panics when the provided `data` slice is too short (minimum
-/// length is [`U32_OCTETS`]).
-///
-/// ### Example
-///
-/// ```
-/// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::read_u32(&d[0..4], binum::Endianness::Big);
-/// assert_eq!(n, 1163411789);
-/// ```
-pub fn read_u32(data: &[u8], endianness: Endianness) -> u32 {
-    match try_read_u32(data, endianness) {
-        Ok(n) => n,
-        Err(err) => panic!("{}", err),
-    }
-}
-
-/// Read four octets from the byte slice `data` as a signed integer (`i32`).
-/// This function panics when the provided `data` slice is too short (minimum
-/// length is [`U32_OCTETS`]). See [`read_u32`] for more information.
-pub fn read_i32(data: &[u8], endianness: Endianness) -> i32 {
-    read_u32(data, endianness) as i32
 }
 
 /// Read eight octets from the byte slice `data` as an unsigned integer (`u64`).
@@ -157,10 +107,10 @@ pub fn read_i32(data: &[u8], endianness: Endianness) -> i32 {
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::try_read_u64(&d[0..], binum::Endianness::Big).unwrap();
+/// let n = binum::read::read_u64(&d[0..], binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 4996815586883028257);
 /// ```
-pub fn try_read_u64(data: &[u8], endianness: Endianness) -> BinaryReadResult<u64> {
+pub fn read_u64(data: &[u8], endianness: Endianness) -> BinaryReadResult<u64> {
     if data.len() < U64_OCTETS {
         return Err(BinaryError::new(
             "Slice of bytes too short to read",
@@ -196,36 +146,11 @@ pub fn try_read_u64(data: &[u8], endianness: Endianness) -> BinaryReadResult<u64
 
 /// Read eight octets from the byte slice `data` as an signed integer (`i64`).
 /// This function returns an error when the provided `data` slice is too short
-/// (minimum length is [`U64_OCTETS`]). See [`try_read_u64`] for more
+/// (minimum length is [`U64_OCTETS`]). See [`read_u64`] for more
 /// information.
-pub fn try_read_i64(data: &[u8], endianness: Endianness) -> BinaryReadResult<i64> {
-    match try_read_u64(data, endianness) {
+pub fn read_i64(data: &[u8], endianness: Endianness) -> BinaryReadResult<i64> {
+    match read_u64(data, endianness) {
         Ok(n) => Ok(n as i64),
         Err(err) => Err(err),
     }
-}
-
-/// Read eight octets from the byte slice `data` as an unsigned integer (`u64`).
-/// This function panics when the provided `data` slice is too short (minimum
-/// length is [`U64_OCTETS`]).
-///
-/// ### Example
-///
-/// ```
-/// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::read_u64(&d[0..], binum::Endianness::Big);
-/// assert_eq!(n, 4996815586883028257);
-/// ```
-pub fn read_u64(data: &[u8], endianness: Endianness) -> u64 {
-    match try_read_u64(data, endianness) {
-        Ok(n) => n,
-        Err(err) => panic!("{}", err),
-    }
-}
-
-/// Read eight octets from the byte slice `data` as a signed integer (`i64`).
-/// This function panics when the provided `data` slice is too short (minimum
-/// length is [`U64_OCTETS`]). See [`read_u64`] for more information.
-pub fn read_i64(data: &[u8], endianness: Endianness) -> i64 {
-    read_u64(data, endianness) as i64
 }
