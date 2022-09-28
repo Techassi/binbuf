@@ -4,8 +4,6 @@ use syn::{DeriveInput, Error, Result};
 
 use crate::shared;
 
-/// Expand the `Readable` derive macro by returning the generated
-/// [`TokenStream`].
 pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     let struct_name = &input.ident;
 
@@ -15,7 +13,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         None => {
             return Err(Error::new(
                 Span::call_site(),
-                "The Readable derive macro can only be used with structs",
+                "The Writeable derive macro can only be used with structs",
             ))
         }
     };
@@ -27,7 +25,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         None => {
             return Err(Error::new(
                 Span::call_site(),
-                "The target struct only supports named fields",
+                "The source struct only supports named fields",
             ))
         }
     };
@@ -37,7 +35,6 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
 
     // Prepare the individual parts of the code gen
     let mut funcs: Vec<TokenStream> = Vec::new();
-    let mut inner: Vec<TokenStream> = Vec::new();
 
     // Iterate over the fields and generate the required code
     for field in named_fields {
@@ -64,38 +61,29 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
             ));
         }
 
-        let var_name = format_ident!("_gen_{}", field_name);
-
-        funcs.push(gen_read_func(&var_name, &field_type));
-
-        inner.push(quote! {
-            #field_name: #var_name,
-        })
+        funcs.push(gen_write_func(&field_name, &field_type));
     }
 
     Ok(quote! {
         impl #struct_name {
-            /// Read data from the byte slice and populate each of teh struct fields.
-            pub fn read_from(data: &Vec<u8>, endianness: binum::Endianness) -> Result<Self, binum::BinaryError> {
+            pub fn write_into(&self, buf: &mut [u8], endianness: binum::Endianness) -> binum::BinaryWriteResult {
                 let mut offset = 0;
 
                 #(#funcs)*
 
-                return Ok(Self {
-                    #(#inner)*
-                })
+                Ok(offset)
             }
         }
     })
 }
 
-fn gen_read_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
-    let seek_fn_name = format_ident!("read_seek_{}", field_type);
+fn gen_write_func(field_name: &Ident, field_type: &Ident) -> TokenStream {
+    let seek_fn_name = format_ident!("write_seek_{}", field_type);
 
     quote! {
-        let #var_name = match binum::read::#seek_fn_name(data, &mut offset, endianness) {
-            Ok(n) => n,
+        match binum::write::#seek_fn_name(self.#field_name, buf, &mut offset, endianness) {
             Err(err) => return Err(err),
+            _=> {},
         };
     }
 }
