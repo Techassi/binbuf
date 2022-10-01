@@ -81,7 +81,7 @@ fn gen_write_func(field_name: &Ident, field_type: &Ident) -> TokenStream {
     let seek_fn_name = format_ident!("write_seek_{}", field_type);
 
     quote! {
-        match binum::write::#seek_fn_name(self.#field_name, buf, &mut offset, endianness) {
+        match binum::#seek_fn_name(self.#field_name, buf, &mut offset, endianness) {
             Err(err) => return Err(err),
             _=> {},
         };

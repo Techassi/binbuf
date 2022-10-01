@@ -17,7 +17,7 @@ pub use seek::*;
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::read_u16(&d[0..2], binum::Endianness::Big).unwrap();
+/// let n = binum::read_u16(&d[0..2], binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 17752);
 /// ```
 pub fn read_u16(data: &[u8], endianness: Endianness) -> BinaryReadResult<u16> {
@@ -59,7 +59,7 @@ pub fn read_i16(data: &[u8], endianness: Endianness) -> BinaryReadResult<i16> {
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::read_u32(&d[0..4], binum::Endianness::Big).unwrap();
+/// let n = binum::read_u32(&d[0..4], binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 1163411789);
 /// ```
 pub fn read_u32(data: &[u8], endianness: Endianness) -> BinaryReadResult<u32> {
@@ -107,7 +107,7 @@ pub fn read_i32(data: &[u8], endianness: Endianness) -> BinaryReadResult<i32> {
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let n = binum::read::read_u64(&d[0..], binum::Endianness::Big).unwrap();
+/// let n = binum::read_u64(&d[0..], binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 4996815586883028257);
 /// ```
 pub fn read_u64(data: &[u8], endianness: Endianness) -> BinaryReadResult<u64> {

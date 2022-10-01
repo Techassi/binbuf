@@ -15,7 +15,7 @@ use crate::{
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
 /// let mut o = 0;
 ///
-/// let n = binum::read::read_seek_u16(&d, &mut o, binum::Endianness::Big).unwrap();
+/// let n = binum::read_seek_u16(&d, &mut o, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 17752);
 /// assert_eq!(o, 2);
 /// ```
@@ -63,7 +63,7 @@ pub fn read_seek_i16(
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
 /// let mut o = 0;
 ///
-/// let n = binum::read::read_seek_u32(&d, &mut o, binum::Endianness::Big).unwrap();
+/// let n = binum::read_seek_u32(&d, &mut o, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 1163411789);
 /// assert_eq!(o, 4);
 /// ```
@@ -111,7 +111,7 @@ pub fn read_seek_i32(
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
 /// let mut o = 0;
 ///
-/// let n = binum::read::read_seek_u64(&d, &mut o, binum::Endianness::Big).unwrap();
+/// let n = binum::read_seek_u64(&d, &mut o, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 4996815586883028257);
 /// assert_eq!(o, 8);
 /// ```

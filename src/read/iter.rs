@@ -12,7 +12,7 @@ use crate::{
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let v = binum::read::read_iter_u16(&d[0..4], 2, binum::Endianness::Big).unwrap();
+/// let v = binum::read_iter_u16(&d[0..4], 2, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(v[0], 17752);
 /// assert_eq!(v[1], 16717);
@@ -42,7 +42,7 @@ pub fn read_iter_u16(data: &[u8], n: usize, endianness: Endianness) -> BinaryRea
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let v = binum::read::read_iter_i16(&d[0..4], 2, binum::Endianness::Big).unwrap();
+/// let v = binum::read_iter_i16(&d[0..4], 2, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(v[0], 17752);
 /// assert_eq!(v[1], 16717);
@@ -72,7 +72,7 @@ pub fn read_iter_i16(data: &[u8], n: usize, endianness: Endianness) -> BinaryRea
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let v = binum::read::read_iter_u32(&d[0..], 2, binum::Endianness::Big).unwrap();
+/// let v = binum::read_iter_u32(&d[0..], 2, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(v[0], 1163411789);
 /// assert_eq!(v[1], 1347175713);
@@ -102,7 +102,7 @@ pub fn read_iter_u32(data: &[u8], n: usize, endianness: Endianness) -> BinaryRea
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let v = binum::read::read_iter_i32(&d[0..], 2, binum::Endianness::Big).unwrap();
+/// let v = binum::read_iter_i32(&d[0..], 2, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(v[0], 1163411789);
 /// assert_eq!(v[1], 1347175713);
@@ -132,7 +132,7 @@ pub fn read_iter_i32(data: &[u8], n: usize, endianness: Endianness) -> BinaryRea
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let v = binum::read::read_iter_u64(&d[0..], 1, binum::Endianness::Big).unwrap();
+/// let v = binum::read_iter_u64(&d[0..], 1, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(v[0], 4996815586883028257);
 /// assert_eq!(v.len(), 1);
@@ -161,7 +161,7 @@ pub fn read_iter_u64(data: &[u8], n: usize, endianness: Endianness) -> BinaryRea
 ///
 /// ```
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let v = binum::read::read_iter_i64(&d[0..], 1, binum::Endianness::Big).unwrap();
+/// let v = binum::read_iter_i64(&d[0..], 1, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(v[0], 4996815586883028257);
 /// assert_eq!(v.len(), 1);

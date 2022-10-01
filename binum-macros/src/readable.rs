@@ -93,7 +93,7 @@ fn gen_read_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
     let seek_fn_name = format_ident!("read_seek_{}", field_type);
 
     quote! {
-        let #var_name = match binum::read::#seek_fn_name(data, &mut offset, endianness) {
+        let #var_name = match binum::#seek_fn_name(data, &mut offset, endianness) {
             Ok(n) => n,
             Err(err) => return Err(err),
         };

@@ -16,7 +16,7 @@ use crate::{
 /// ```
 /// let mut b = vec![0; 4];
 /// let d = vec![17752, 16717];
-/// let n = binum::write::write_iter_u16(d, &mut b, binum::Endianness::Big).unwrap();
+/// let n = binum::write_iter_u16(d, &mut b, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(n, 4);
 /// assert_eq!(b, vec![69, 88, 65, 77]);
@@ -54,7 +54,7 @@ pub fn write_iter_u16(
 /// ```
 /// let mut b = vec![0; 4];
 /// let d = vec![17752, 16717];
-/// let n = binum::write::write_iter_i16(d, &mut b, binum::Endianness::Big).unwrap();
+/// let n = binum::write_iter_i16(d, &mut b, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(n, 4);
 /// assert_eq!(b, vec![69, 88, 65, 77]);
@@ -92,7 +92,7 @@ pub fn write_iter_i16(
 /// ```
 /// let mut b = vec![0; 8];
 /// let d = vec![1163411789, 1347175713];
-/// let n = binum::write::write_iter_u32(d, &mut b, binum::Endianness::Big).unwrap();
+/// let n = binum::write_iter_u32(d, &mut b, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(n, 8);
 /// assert_eq!(b, vec![69, 88, 65, 77, 80, 76, 69, 33]);
@@ -130,7 +130,7 @@ pub fn write_iter_u32(
 /// ```
 /// let mut b = vec![0; 8];
 /// let d = vec![1163411789, 1347175713];
-/// let n = binum::write::write_iter_i32(d, &mut b, binum::Endianness::Big).unwrap();
+/// let n = binum::write_iter_i32(d, &mut b, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(n, 8);
 /// assert_eq!(b, vec![69, 88, 65, 77, 80, 76, 69, 33]);
@@ -168,7 +168,7 @@ pub fn write_iter_i32(
 /// ```
 /// let mut b = vec![0; 8];
 /// let d = vec![4996815586883028257];
-/// let n = binum::write::write_iter_u64(d, &mut b, binum::Endianness::Big).unwrap();
+/// let n = binum::write_iter_u64(d, &mut b, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(n, 8);
 /// assert_eq!(b, vec![69, 88, 65, 77, 80, 76, 69, 33]);
@@ -206,7 +206,7 @@ pub fn write_iter_u64(
 /// ```
 /// let mut b = vec![0; 8];
 /// let d = vec![4996815586883028257];
-/// let n = binum::write::write_iter_i64(d, &mut b, binum::Endianness::Big).unwrap();
+/// let n = binum::write_iter_i64(d, &mut b, binum::Endianness::Big).unwrap();
 ///
 /// assert_eq!(n, 8);
 /// assert_eq!(b, vec![69, 88, 65, 77, 80, 76, 69, 33]);

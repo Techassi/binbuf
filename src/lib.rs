@@ -1,13 +1,15 @@
 mod endian;
 mod error;
+mod read;
+mod write;
 
 pub mod macros;
-pub mod read;
-pub mod write;
 
 pub use error::BinaryError;
 
 pub use endian::*;
+pub use read::*;
+pub use write::*;
 
 pub const BITS_IN_OCTET: u32 = 8;
 pub const U16_OCTETS: usize = (u16::BITS / BITS_IN_OCTET) as usize;

@@ -17,7 +17,7 @@ pub use seek::*;
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::write::write_u16(69, &mut v, binum::Endianness::Big).unwrap();
+/// let n = binum::write_u16(69, &mut v, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 2);
 /// ```
 pub fn write_u16(value: u16, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
@@ -61,7 +61,7 @@ pub fn write_i16(value: i16, buf: &mut [u8], endianness: Endianness) -> BinaryWr
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::write::write_u32(69, &mut v, binum::Endianness::Big).unwrap();
+/// let n = binum::write_u32(69, &mut v, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 4);
 /// ```
 pub fn write_u32(value: u32, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
@@ -109,7 +109,7 @@ pub fn write_i32(value: i32, buf: &mut [u8], endianness: Endianness) -> BinaryWr
 ///
 /// ```
 /// let mut v: Vec<u8> = vec![0; 8];
-/// let n = binum::write::write_u64(69, &mut v, binum::Endianness::Big).unwrap();
+/// let n = binum::write_u64(69, &mut v, binum::Endianness::Big).unwrap();
 /// assert_eq!(n, 8);
 /// ```
 pub fn write_u64(value: u64, buf: &mut [u8], endianness: Endianness) -> BinaryWriteResult {
