@@ -66,7 +66,7 @@ impl Endianness for BigEndian {
         let mut v = Vec::with_capacity(nints);
 
         for i in 0..nints {
-            match Self::read(&buf[i * U16_BYTES..]) {
+            match Self::read(&buf[i * T::SIZE..]) {
                 Ok(n) => v.push(n),
                 Err(err) => return Err(err),
             };
