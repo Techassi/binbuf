@@ -1,13 +1,10 @@
-mod endian;
 mod error;
+mod io;
 mod macros;
 
-use std::io::{Read, Write};
-
 pub use error::BinaryError;
+pub use io::*;
 pub use macros::{Readable, Writeable};
-
-pub use endian::*;
 
 use error::BinaryErrorVariant;
 use macros::{endianness_impl, from_and_into_bytes_trait_impl};
@@ -39,94 +36,6 @@ pub trait IntoBytes {
 from_and_into_bytes_trait_impl!(u16, U16_BYTES, BinaryErrorVariant::U16);
 from_and_into_bytes_trait_impl!(u32, U32_BYTES, BinaryErrorVariant::U32);
 from_and_into_bytes_trait_impl!(u64, U64_BYTES, BinaryErrorVariant::U64);
-
-pub trait ReadExt: Read {
-    /// Read a single value from a reader, e.g. a [`Cursor`].
-    ///
-    /// ### Example
-    ///
-    /// ```
-    /// use std::io::Cursor;
-    /// use binum::ReadExt;
-    ///
-    /// let mut r = Cursor::new(vec![69, 88, 65, 77, 80, 76, 69, 33]);
-    /// let n = r.read_from::<u16, binum::BigEndian>().unwrap();
-    /// assert_eq!(n, 17752);
-    /// ```
-    fn read_from<T: FromBytes, E: Endianness>(&mut self) -> BinaryReadResult<T> {
-        let mut buf = vec![0; T::SIZE];
-
-        match self.read_exact(&mut buf) {
-            Err(err) => return Err(BinaryError::new(err.to_string(), T::ERR_VARIANT)),
-            _ => {}
-        };
-
-        E::read::<T>(&buf)
-    }
-
-    /// Read multiple values from a reader, e.g. a [`Cursor`].
-    ///
-    /// ### Example
-    ///
-    /// ```
-    /// use std::io::Cursor;
-    /// use binum::ReadExt;
-    ///
-    /// let mut r = Cursor::new(vec![69, 88, 65, 77, 80, 76, 69, 33]);
-    /// let n = r.read_multi::<u16, binum::BigEndian>(2).unwrap();
-    /// assert_eq!(n[0], 17752);
-    /// assert_eq!(n[1], 16717);
-    /// ```
-    fn read_multi<T: FromBytes, E: Endianness>(
-        &mut self,
-        nints: usize,
-    ) -> BinaryReadResult<Vec<T>> {
-        let mut buf = vec![0; T::SIZE * nints];
-
-        match self.read_exact(&mut buf) {
-            Err(err) => return Err(BinaryError::new(err.to_string(), T::ERR_VARIANT)),
-            _ => {}
-        }
-
-        E::read_multi(&buf, nints)
-    }
-}
-
-// Auto implement ReadExt for types which implement Read
-impl<R: Read + ?Sized> ReadExt for R {}
-
-pub trait WriteExt: Write {
-    fn write_into<T: IntoBytes, E: Endianness>(&mut self, n: T) -> BinaryWriteResult {
-        let mut buf = vec![0; T::SIZE];
-
-        match E::write(n, &mut buf) {
-            Err(err) => return Err(BinaryError::new(err.to_string(), T::ERR_VARIANT)),
-            _ => {}
-        };
-
-        match self.write(&buf) {
-            Ok(n) => Ok(n),
-            Err(err) => Err(BinaryError::new(err.to_string(), T::ERR_VARIANT)),
-        }
-    }
-
-    fn write_multi<T: IntoBytes, E: Endianness>(&mut self, n: Vec<T>) -> BinaryWriteResult {
-        let mut buf = vec![0; T::SIZE * n.len()];
-
-        match E::write_multi(n, &mut buf) {
-            Err(err) => return Err(BinaryError::new(err.to_string(), T::ERR_VARIANT)),
-            _ => {}
-        };
-
-        match self.write(&buf) {
-            Ok(n) => Ok(n),
-            Err(err) => Err(BinaryError::new(err.to_string(), T::ERR_VARIANT)),
-        }
-    }
-}
-
-// Auto implement WriteExt for types which implement Write
-impl<W: Write + ?Sized> WriteExt for W {}
 
 pub trait Endianness {
     fn read<T: FromBytes>(buf: &[u8]) -> BinaryReadResult<T>;
