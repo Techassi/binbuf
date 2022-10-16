@@ -36,7 +36,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         return Ok(quote! {});
     }
 
-    let mut c = TokenStream::new();
+    let c: TokenStream;
 
     if named_fields.len() == 1 {
         c = match gen_one_field(named_fields.first().unwrap(), struct_name) {
@@ -109,32 +109,33 @@ fn gen_multiple_fields(
 
             let var_name = format_ident!("_gen_{}", field_name);
 
-            funcs.push(shared::gen_cursor_read_func(&var_name, field_type));
+            funcs.push(shared::gen_io_read_func(&var_name, field_type));
             inner.push(quote! {
                 #field_name: #var_name,
             });
-        } else {
-            let mut fields = String::new();
-            let field_type = &entry.ty;
+            continue;
+        }
 
-            for ident in &entry.idents {
-                fields.push_str(&ident.to_string())
-            }
+        let mut fields = String::new();
+        let field_type = &entry.ty;
 
-            let var_name = format_ident!("_gen_multi_{}", fields);
-            funcs.push(shared::gen_cursor_multi_read_func(
-                &var_name,
-                field_type,
-                entry.count,
-            ));
+        for ident in &entry.idents {
+            fields.push_str(&ident.to_string())
+        }
 
-            for i in 0..entry.count {
-                let field_name = &entry.idents[i];
+        let var_name = format_ident!("_gen_multi_{}", fields);
+        funcs.push(shared::gen_io_multi_read_func(
+            &var_name,
+            field_type,
+            entry.count,
+        ));
 
-                inner.push(quote! {
-                    #field_name: #var_name[#i],
-                })
-            }
+        for i in 0..entry.count {
+            let field_name = &entry.idents[i];
+
+            inner.push(quote! {
+                #field_name: #var_name[#i],
+            })
         }
     }
 

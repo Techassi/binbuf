@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::{format_ident, quote};
-use syn::{DeriveInput, Error, Result};
+use quote::quote;
+use syn::{punctuated::Punctuated, token::Comma, DeriveInput, Error, Field, Result};
 
 use crate::shared;
 
@@ -30,60 +30,85 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    // These are the allowed / supported types which we can read from the byte slice
-    let allowed_types = vec!["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"];
+    if named_fields.len() == 0 {
+        return Ok(quote! {});
+    }
 
-    // Prepare the individual parts of the code gen
-    let mut funcs: Vec<TokenStream> = Vec::new();
+    let c: TokenStream;
 
-    // Iterate over the fields and generate the required code
-    for field in named_fields {
-        let field_name = &field.ident.unwrap();
-
-        let field_type = match shared::extract_last_path_segment_ident(field.ty) {
-            Some(li) => li,
-            None => {
-                return Err(Error::new(
-                    Span::call_site(),
-                    "Failed to extract ident from field type",
-                ))
-            }
+    if named_fields.len() == 1 {
+        c = match gen_one_field(named_fields.first().unwrap(), struct_name) {
+            Ok(ts) => ts,
+            Err(err) => return Err(err),
         };
-
-        // There has to be a better way to do this, right?
-        if !allowed_types.contains(&field_type.to_string().as_str()) {
-            return Err(Error::new(
-                Span::call_site(),
-                format!(
-                    "Invalid type found in struct '{}'. Only {:?} allowed",
-                    input.ident, allowed_types
-                ),
-            ));
-        }
-
-        funcs.push(gen_write_func(&field_name, &field_type));
+    } else {
+        c = match gen_multiple_fields(named_fields, struct_name) {
+            Ok(ts) => ts,
+            Err(err) => return Err(err),
+        };
     }
 
     Ok(quote! {
+        use binum::WriteExt;
+
         impl #struct_name {
-            pub fn write_into(&self, buf: &mut [u8], endianness: binum::Endianness) -> binum::BinaryWriteResult {
-                let mut offset = 0;
-
-                #(#funcs)*
-
-                Ok(offset)
+            pub fn write_into<E>(&self, mut buf: &mut [u8]) -> binum::BinaryWriteResult
+            where
+                E: binum::Endianness
+            {
+                #c
             }
         }
     })
 }
 
-fn gen_write_func(field_name: &Ident, field_type: &Ident) -> TokenStream {
-    let seek_fn_name = format_ident!("write_seek_{}", field_type);
+fn gen_one_field(field: &Field, struct_ident: &Ident) -> Result<TokenStream> {
+    // Extract the field name
+    let field_name = field.ident.as_ref().unwrap();
 
-    quote! {
-        match binum::#seek_fn_name(self.#field_name, buf, &mut offset, endianness) {
-            Err(err) => return Err(err),
-            _=> {},
-        };
+    // Extract the field type and also check if it is an allowed type
+    let field_type = match shared::extract_allowed_field_type(&field.ty, struct_ident) {
+        Ok(t) => t,
+        Err(err) => return Err(err),
+    };
+
+    let func = shared::gen_write_func(field_name, &field_type);
+
+    Ok(quote! {
+        #func
+    })
+}
+
+fn gen_multiple_fields(
+    fields: Punctuated<Field, Comma>,
+    struct_ident: &Ident,
+) -> Result<TokenStream> {
+    let entries = match shared::extract_continuous_field_types(fields, struct_ident) {
+        Ok(e) => e,
+        Err(err) => return Err(err),
+    };
+
+    // Prepare the individual parts of the code gen
+    let mut funcs: Vec<TokenStream> = Vec::new();
+
+    for entry in entries {
+        if entry.count == 1 {
+            let field_type = &entry.ty;
+            let field_name = &entry.idents[0];
+
+            funcs.push(shared::gen_io_write_func(field_name, field_type));
+            continue;
+        }
+
+        let field_type = &entry.ty;
+        funcs.push(shared::gen_io_multi_write_func(entry.idents, field_type));
     }
+
+    Ok(quote! {
+        let mut n = 0;
+
+        #(#funcs)*
+
+        Ok(n)
+    })
 }
