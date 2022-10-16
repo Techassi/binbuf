@@ -51,9 +51,11 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     }
 
     Ok(quote! {
+        use binum::ReadExt;
+
         impl #struct_name {
             /// Read data from the byte slice and populate each of the struct fields.
-            pub fn read_from<E>(data: &[u8]) -> Result<Self, binum::BinaryError>
+            pub fn read_from<E>(buf: &[u8]) -> Result<Self, binum::BinaryError>
                 where E: binum::Endianness
             {
                 #c
@@ -107,7 +109,7 @@ fn gen_multiple_fields(
 
             let var_name = format_ident!("_gen_{}", field_name);
 
-            funcs.push(shared::gen_read_func(&var_name, field_type));
+            funcs.push(shared::gen_cursor_read_func(&var_name, field_type));
             inner.push(quote! {
                 #field_name: #var_name,
             });
@@ -120,7 +122,7 @@ fn gen_multiple_fields(
             }
 
             let var_name = format_ident!("_gen_multi_{}", fields);
-            funcs.push(shared::gen_multi_read_func(
+            funcs.push(shared::gen_cursor_multi_read_func(
                 &var_name,
                 field_type,
                 entry.count,
@@ -137,6 +139,8 @@ fn gen_multiple_fields(
     }
 
     Ok(quote! {
+        let mut reader = std::io::Cursor::new(buf);
+
         #(#funcs)*
 
         return Ok(Self {

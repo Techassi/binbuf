@@ -1,8 +1,13 @@
-use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+use proc_macro2::{Ident, Span};
 use syn::{
     punctuated::Punctuated, token::Comma, Data, DataStruct, Error, Field, FieldsNamed, Type,
 };
+
+mod read;
+mod write;
+
+pub use read::*;
+pub use write::*;
 
 // These are the allowed / supported types which we can read from the byte slice
 pub const ALLOWED_TYPES: [&str; 4] = ["u8", "u16", "u32", "u64"];
@@ -107,24 +112,4 @@ pub fn extract_continuous_field_types(
     }
 
     return Ok(entries);
-}
-
-/// This generates a single read function call.
-pub fn gen_read_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
-    quote! {
-        let #var_name = match E::read::<#field_type>(data) {
-            Ok(n) => n,
-            Err(err) => return Err(err),
-        };
-    }
-}
-
-/// This generates a multi read function call.
-pub fn gen_multi_read_func(var_name: &Ident, field_type: &Ident, nints: usize) -> TokenStream {
-    quote! {
-        let #var_name = match E::read_multi::<#field_type>(data, #nints) {
-            Ok(n) => n,
-            Err(err) => return Err(err),
-        };
-    }
 }
