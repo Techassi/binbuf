@@ -8,11 +8,11 @@ pub trait ReadExt: Read {
     /// ### Example
     ///
     /// ```
+    /// use binum::prelude::*;
     /// use std::io::Cursor;
-    /// use binum::ReadExt;
     ///
     /// let mut r = Cursor::new(vec![69, 88, 65, 77, 80, 76, 69, 33]);
-    /// let n = r.read_from::<u16, binum::BigEndian>().unwrap();
+    /// let n = r.read_from::<u16, BigEndian>().unwrap();
     ///
     /// assert_eq!(n, 17752);
     /// ```
@@ -32,11 +32,11 @@ pub trait ReadExt: Read {
     /// ### Example
     ///
     /// ```
+    /// use binum::prelude::*;
     /// use std::io::Cursor;
-    /// use binum::ReadExt;
     ///
     /// let mut r = Cursor::new(vec![69, 88, 65, 77, 80, 76, 69, 33]);
-    /// let n = r.read_multi::<u16, binum::BigEndian>(2).unwrap();
+    /// let n = r.read_multi::<u16, BigEndian>(2).unwrap();
     ///
     /// assert_eq!(n[0], 17752);
     /// assert_eq!(n[1], 16717);
@@ -65,10 +65,10 @@ pub trait WriteExt: Write {
     /// ### Example
     ///
     /// ```
-    /// use binum::WriteExt;
+    /// use binum::prelude::*;
     ///
     /// let mut w: Vec<u8> = Vec::new();
-    /// let n = w.write_into::<u16, binum::BigEndian>(17752).unwrap();
+    /// let n = w.write_into::<u16, BigEndian>(17752).unwrap();
     ///
     /// assert_eq!(n, 2);
     /// assert_eq!(w, vec![69, 88]);
@@ -92,10 +92,10 @@ pub trait WriteExt: Write {
     /// ### Example
     ///
     /// ```
-    /// use binum::WriteExt;
+    /// use binum::prelude::*;
     ///
     /// let mut w: Vec<u8> = Vec::new();
-    /// let n = w.write_multi::<u16, binum::BigEndian>(vec![17752, 16717]).unwrap();
+    /// let n = w.write_multi::<u16, BigEndian>(vec![17752, 16717]).unwrap();
     ///
     /// assert_eq!(n, 4);
     /// assert_eq!(w, vec![69, 88, 65, 77]);

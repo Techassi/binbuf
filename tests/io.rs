@@ -1,4 +1,4 @@
-use binum::{BigEndian, ReadExt, WriteExt};
+use binum::prelude::*;
 use std::io::Cursor;
 
 #[test]

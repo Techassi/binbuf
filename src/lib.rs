@@ -9,13 +9,25 @@ pub use macros::{Readable, Writeable};
 use error::BinaryErrorVariant;
 use macros::{endianness_impl, from_and_into_bytes_trait_impl};
 
+// Prelude
+
+pub mod prelude {
+    pub use crate::{BigEndian, Endianness, LittleEndian, ReadExt, WriteExt};
+}
+
+// Public constants
+
 pub const BITS_IN_BYTE: u32 = 8;
 pub const U16_BYTES: usize = (u16::BITS / BITS_IN_BYTE) as usize;
 pub const U32_BYTES: usize = (u32::BITS / BITS_IN_BYTE) as usize;
 pub const U64_BYTES: usize = (u64::BITS / BITS_IN_BYTE) as usize;
 
+// Public types
+
 pub type BinaryReadResult<T> = Result<T, BinaryError>;
 pub type BinaryWriteResult = Result<usize, BinaryError>;
+
+// FromBytes + IntoBytes traits and their impl
 
 pub trait FromBytes {
     const ERR_VARIANT: BinaryErrorVariant;
@@ -37,6 +49,8 @@ from_and_into_bytes_trait_impl!(u16, U16_BYTES, BinaryErrorVariant::U16);
 from_and_into_bytes_trait_impl!(u32, U32_BYTES, BinaryErrorVariant::U32);
 from_and_into_bytes_trait_impl!(u64, U64_BYTES, BinaryErrorVariant::U64);
 
+// Endianness trait and the impls for BigEndian and LittöeEndian
+
 pub trait Endianness {
     fn read<T: FromBytes>(buf: &[u8]) -> BinaryReadResult<T>;
     fn read_multi<T: FromBytes>(buf: &[u8], nints: usize) -> BinaryReadResult<Vec<T>>;
@@ -50,3 +64,38 @@ endianness_impl!(BigEndian, from_be_bytes, to_be_bytes);
 
 pub struct LittleEndian {}
 endianness_impl!(LittleEndian, from_le_bytes, to_le_bytes);
+
+// Public generic read and write functions
+
+/// Read an unsigned integer of type `T` from `buf` with [`Endianness`]. This
+/// function returns either the integer of type `T` or an error indicating the
+/// buf was too short.
+///
+/// ### Example
+///
+/// ```
+/// use binum::prelude::*;
+///
+/// let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
+/// let n = binum::read::<u16, BigEndian>(&b).unwrap();
+///
+/// assert_eq!(n, 17752);
+/// ```
+pub fn read<T: FromBytes, E: Endianness>(buf: &[u8]) -> BinaryReadResult<T> {
+    E::read(buf)
+}
+
+pub fn read_multi<T: FromBytes, E: Endianness>(
+    buf: &[u8],
+    nints: usize,
+) -> BinaryReadResult<Vec<T>> {
+    E::read_multi(buf, nints)
+}
+
+pub fn write<T: IntoBytes, E: Endianness>(n: T, buf: &mut [u8]) -> BinaryWriteResult {
+    E::write(n, buf)
+}
+
+pub fn write_multi<T: IntoBytes, E: Endianness>(n: Vec<T>, buf: &mut [u8]) -> BinaryWriteResult {
+    E::write_multi(n, buf)
+}
