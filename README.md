@@ -2,6 +2,10 @@
 
 binum (short for *binary numbers*) is a small library to work with binary (network) data in Rust.
 
+## TODOs
+
+- Try to implement elegant and easy-to-use String packing and unpacking
+
 ## Usage
 
 ### Reading integers from byte slices
