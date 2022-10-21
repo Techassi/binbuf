@@ -9,13 +9,17 @@ pub use macros::{Readable, Writeable};
 use error::BinaryErrorVariant;
 use macros::{endianness_impl, from_and_into_bytes_trait_impl};
 
-// Prelude
+/////////////
+// Prelude //
+/////////////
 
 pub mod prelude {
     pub use crate::{BigEndian, Endianness, LittleEndian, ReadExt, WriteExt};
 }
 
-// Public constants
+//////////////////////
+// Public constants //
+//////////////////////
 
 pub const BITS_IN_BYTE: u32 = 8;
 pub const U16_BYTES: usize = (u16::BITS / BITS_IN_BYTE) as usize;
@@ -28,16 +32,28 @@ pub const U128_BYTES: usize = (u128::BITS / BITS_IN_BYTE) as usize;
 pub type BinaryReadResult<T> = Result<T, BinaryError>;
 pub type BinaryWriteResult = Result<usize, BinaryError>;
 
-// FromBytes + IntoBytes traits and their impl
+/////////////////////////////////////////////////
+// FromBytes + IntoBytes traits and their impl //
+/////////////////////////////////////////////////
 
+/// The [`FromBytes`] trait defines methods to create types (which implement
+/// this trait) from little and big endian representations. [`FromBytes::SIZE`]
+/// specifies the binary size (in bytes / octets) of the type.
 pub trait FromBytes {
     const ERR_VARIANT: BinaryErrorVariant;
     const SIZE: usize;
 
+    /// Create [`Self`] from bytes in little endian representation.
     fn from_le_bytes(bytes: &[u8]) -> Self;
+
+    /// Create [`Self`] from bytes in big endian representation.
     fn from_be_bytes(bytes: &[u8]) -> Self;
 }
 
+/// The [`IntoBytes`] trait defines methods to create byte vectors of types
+/// (which implement this trait) in little and big endian representation.
+/// [`IntoBytes::SIZE`] specifies the binary size (in bytes / octets) of the
+/// type.
 pub trait IntoBytes {
     const ERR_VARIANT: BinaryErrorVariant;
     const SIZE: usize;
@@ -51,7 +67,9 @@ from_and_into_bytes_trait_impl!(u32, U32_BYTES, BinaryErrorVariant::U32);
 from_and_into_bytes_trait_impl!(u64, U64_BYTES, BinaryErrorVariant::U64);
 from_and_into_bytes_trait_impl!(u128, U128_BYTES, BinaryErrorVariant::U128);
 
-// Endianness trait and the impls for BigEndian and LittöeEndian
+///////////////////////////////////////////////////////////////////
+// Endianness trait and the impls for BigEndian and LittleEndian //
+///////////////////////////////////////////////////////////////////
 
 pub trait Endianness {
     fn read<T: FromBytes>(buf: &[u8]) -> BinaryReadResult<T>;
@@ -67,7 +85,9 @@ endianness_impl!(BigEndian, from_be_bytes, to_be_bytes);
 pub struct LittleEndian {}
 endianness_impl!(LittleEndian, from_le_bytes, to_le_bytes);
 
-// Public generic read and write functions
+/////////////////////////////////////////////
+// Public generic read and write functions //
+/////////////////////////////////////////////
 
 /// Read an unsigned integer of type `T` from `buf` with [`Endianness`]. This
 /// function returns either the integer of type `T` or an error indicating the
