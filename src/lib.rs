@@ -21,6 +21,7 @@ pub const BITS_IN_BYTE: u32 = 8;
 pub const U16_BYTES: usize = (u16::BITS / BITS_IN_BYTE) as usize;
 pub const U32_BYTES: usize = (u32::BITS / BITS_IN_BYTE) as usize;
 pub const U64_BYTES: usize = (u64::BITS / BITS_IN_BYTE) as usize;
+pub const U128_BYTES: usize = (u128::BITS / BITS_IN_BYTE) as usize;
 
 // Public types
 
@@ -48,6 +49,7 @@ pub trait IntoBytes {
 from_and_into_bytes_trait_impl!(u16, U16_BYTES, BinaryErrorVariant::U16);
 from_and_into_bytes_trait_impl!(u32, U32_BYTES, BinaryErrorVariant::U32);
 from_and_into_bytes_trait_impl!(u64, U64_BYTES, BinaryErrorVariant::U64);
+from_and_into_bytes_trait_impl!(u128, U128_BYTES, BinaryErrorVariant::U128);
 
 // Endianness trait and the impls for BigEndian and LittöeEndian
 
