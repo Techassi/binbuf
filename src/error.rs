@@ -5,6 +5,8 @@ pub enum BinaryErrorVariant {
     U16,
     U32,
     U64,
+    U128,
+    Variable,
 }
 
 impl fmt::Display for BinaryErrorVariant {
@@ -13,6 +15,8 @@ impl fmt::Display for BinaryErrorVariant {
             BinaryErrorVariant::U16 => write!(f, "u16/i16"),
             BinaryErrorVariant::U32 => write!(f, "u32/i32"),
             BinaryErrorVariant::U64 => write!(f, "u64/i64"),
+            BinaryErrorVariant::U128 => write!(f, "u128/i128"),
+            BinaryErrorVariant::Variable => write!(f, "variable"),
         }
     }
 }
