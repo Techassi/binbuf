@@ -1,8 +1,10 @@
 mod error;
+mod impls;
 mod io;
 mod macros;
 
 pub use error::BinaryError;
+pub use impls::*;
 pub use io::*;
 pub use macros::{Readable, Writeable};
 
@@ -67,6 +69,23 @@ from_and_into_bytes_trait_impl!(u32, U32_BYTES, BinaryErrorVariant::U32);
 from_and_into_bytes_trait_impl!(u64, U64_BYTES, BinaryErrorVariant::U64);
 from_and_into_bytes_trait_impl!(u128, U128_BYTES, BinaryErrorVariant::U128);
 
+//////////////////////////////////////////////////
+// FromBytesVariable + IntoBytesVariable traits //
+//////////////////////////////////////////////////
+
+pub trait FromBytesVariable: Sized {
+    const TERMINATION: Option<u8>;
+
+    fn from_bytes(bytes: &[u8]) -> BinaryReadResult<Self>;
+}
+
+pub trait IntoBytesVariable: Sized {
+    const TERMINATION: Option<u8>;
+
+    fn to_bytes(self) -> Vec<u8>;
+    fn size(&self) -> usize;
+}
+
 ///////////////////////////////////////////////////////////////////
 // Endianness trait and the impls for BigEndian and LittleEndian //
 ///////////////////////////////////////////////////////////////////
@@ -114,10 +133,31 @@ pub fn read_multi<T: FromBytes, E: Endianness>(
     E::read_multi(buf, nints)
 }
 
+pub fn read_bytes<T: FromBytesVariable>(buf: &[u8], n: usize) -> BinaryReadResult<T> {
+    T::from_bytes(&buf[0..n])
+}
+
 pub fn write<T: IntoBytes, E: Endianness>(n: T, buf: &mut [u8]) -> BinaryWriteResult {
     E::write(n, buf)
 }
 
 pub fn write_multi<T: IntoBytes, E: Endianness>(n: Vec<T>, buf: &mut [u8]) -> BinaryWriteResult {
     E::write_multi(n, buf)
+}
+
+pub fn write_bytes<T: IntoBytesVariable>(v: T, buf: &mut [u8]) -> BinaryWriteResult {
+    let size = v.size();
+    if buf.len() < size {
+        return Err(BinaryError::new(
+            "Buf too short",
+            BinaryErrorVariant::Variable,
+        ));
+    }
+
+    let bytes = v.to_bytes();
+    for i in 0..size {
+        buf[i] = bytes[i];
+    }
+
+    Ok(size)
 }
