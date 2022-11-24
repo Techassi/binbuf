@@ -9,6 +9,8 @@ binbuf (short for *binary buffers*) is a small library to work with binary (netw
 
 ## Usage
 
+Just add `use binbuf::prelude::*` to your imports. This imports the most important parts of the library.
+
 ### Reading
 
 ```rust
