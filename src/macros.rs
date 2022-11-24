@@ -1,9 +1,9 @@
 pub use binbuf_macros::*;
 
 macro_rules! from_buffer_and_readable_impl {
-    ($SelfT:ty) => {
+    ($SelfT:ty, $Size:expr) => {
         impl FromBuffer for $SelfT {
-            const SIZE: usize = (Self::BITS / 8) as usize;
+            const SIZE: usize = $Size;
 
             fn as_be(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
@@ -25,9 +25,9 @@ macro_rules! from_buffer_and_readable_impl {
 }
 
 macro_rules! into_buffer_and_writeable_impl {
-    ($SelfT:ty) => {
+    ($SelfT:ty, $Size:expr) => {
         impl IntoBuffer for $SelfT {
-            const SIZE: usize = (Self::BITS / 8) as usize;
+            const SIZE: usize = $Size;
 
             fn as_be(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
                 let b = self.to_be_bytes();

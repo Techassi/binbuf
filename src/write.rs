@@ -81,8 +81,8 @@ pub trait Writeable: Sized {
     fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteBufferResult;
 }
 
-into_buffer_and_writeable_impl!(u8);
-into_buffer_and_writeable_impl!(u16);
-into_buffer_and_writeable_impl!(u32);
-into_buffer_and_writeable_impl!(u64);
-into_buffer_and_writeable_impl!(u128);
+into_buffer_and_writeable_impl!(u8, 1);
+into_buffer_and_writeable_impl!(u16, 2);
+into_buffer_and_writeable_impl!(u32, 4);
+into_buffer_and_writeable_impl!(u64, 8);
+into_buffer_and_writeable_impl!(u128, 16);

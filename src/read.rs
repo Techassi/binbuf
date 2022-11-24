@@ -267,8 +267,8 @@ pub trait Readable: Sized {
     fn read<E: Endianness>(buf: &mut ReadBuffer) -> ReadBufferResult<Self>;
 }
 
-from_buffer_and_readable_impl!(u8);
-from_buffer_and_readable_impl!(u16);
-from_buffer_and_readable_impl!(u32);
-from_buffer_and_readable_impl!(u64);
-from_buffer_and_readable_impl!(u128);
+from_buffer_and_readable_impl!(u8, 1);
+from_buffer_and_readable_impl!(u16, 2);
+from_buffer_and_readable_impl!(u32, 4);
+from_buffer_and_readable_impl!(u64, 8);
+from_buffer_and_readable_impl!(u128, 16);
