@@ -1,6 +1,6 @@
-# binum
+# binbuf
 
-binum (short for *binary numbers*) is a small library to work with binary (network) data in Rust.
+binbuf (short for *binary buffers*) is a small library to work with binary (network) data in Rust.
 
 ## TODOs
 
