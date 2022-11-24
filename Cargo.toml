@@ -1,19 +1,25 @@
 [workspace]
 members = [
   ".",
-  "binum-macros"
+  "binbuf-macros"
 ]
 
 [package]
-name = "binum"
+name = "binbuf"
 version = "0.0.1"
 edition = "2021"
 authors = ["Techassi <git@techassi.dev>"]
-description = "binum is a small library to work with binary (network) data"
-repository = "https://github.com/Techassi/binum"
-homepage = "https://github.com/Techassi/binum"
+description = "binbuf is a small library to work with binary (network) data"
+repository = "https://github.com/Techassi/binbuf"
+homepage = "https://github.com/Techassi/binbuf"
 categories = ["encoding", "parsing", "network-programming"]
 keywords = ["binary", "numbers", "network"]
 
+[features]
+full = ["macros", "utils"]
+macros = []
+utils = []
+
 [dependencies]
-binum-macros = { path = "binum-macros" }
+binbuf-macros = { path = "binbuf-macros" }
+thiserror = "1.0.37"

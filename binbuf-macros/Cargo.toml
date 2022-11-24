@@ -1,5 +1,5 @@
 [package]
-name = "binum-macros"
+name = "binbuf-macros"
 version = "0.0.1"
 edition = "2021"
 
