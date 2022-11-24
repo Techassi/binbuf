@@ -10,6 +10,7 @@ pub trait ToWriteBuffer {
     fn write_slice(&mut self, s: &[u8]) -> WriteBufferResult;
     fn write_vec(&mut self, v: &mut Vec<u8>) -> WriteBufferResult;
     fn bytes(&self) -> &[u8];
+    fn clear(&mut self);
 }
 
 pub struct WriteBuffer {
@@ -45,6 +46,27 @@ impl ToWriteBuffer for WriteBuffer {
 
     fn bytes(&self) -> &[u8] {
         return self.buf.as_slice();
+    }
+
+    fn clear(&mut self) {
+        self.buf.clear()
+    }
+}
+
+impl WriteBuffer {
+    pub fn write_char_string(&mut self, s: &[u8]) -> WriteBufferResult {
+        let l = s.len();
+
+        if l > u8::MAX as usize {
+            return Err(BufferError::MaxLengthOverflow);
+        }
+
+        self.push(l as u8);
+
+        match self.write_slice(s) {
+            Ok(n) => Ok(n + 1),
+            Err(err) => return Err(err),
+        }
     }
 }
 

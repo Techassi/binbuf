@@ -43,3 +43,14 @@ fn test_read_u64() {
         Err(err) => panic!("{}", err),
     }
 }
+
+#[test]
+fn test_read_char_string() {
+    let b = vec![8, 69, 88, 65, 77, 80, 76, 69, 33];
+    let mut b = ReadBuffer::new(b.as_slice());
+
+    match b.read_char_string(None) {
+        Ok(n) => assert_eq!(n, &[69, 88, 65, 77, 80, 76, 69, 33]),
+        Err(err) => panic!("{}", err),
+    }
+}
