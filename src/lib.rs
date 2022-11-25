@@ -38,7 +38,7 @@ impl Endianness for LittleEndian {
 pub mod prelude {
     pub use crate::{
         error::BufferError,
-        read::{ReadBuffer, ReadBufferResult, Readable, ToReadBuffer},
+        read::{ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ToReadBuffer},
         write::{ToWriteBuffer, WriteBuffer, WriteBufferResult, Writeable},
         BigEndian, LittleEndian,
     };

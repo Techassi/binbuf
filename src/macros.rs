@@ -21,6 +21,8 @@ macro_rules! from_buffer_and_readable_impl {
                 E::read(buf)
             }
         }
+
+        impl ReadableMulti for $SelfT {}
     };
 }
 

@@ -267,6 +267,18 @@ pub trait Readable: Sized {
     fn read<E: Endianness>(buf: &mut ReadBuffer) -> ReadBufferResult<Self>;
 }
 
+pub trait ReadableMulti: Readable + Default + Copy {
+    fn read_multi<E: Endianness, const S: usize>(
+        buf: &mut ReadBuffer,
+    ) -> ReadBufferResult<[Self; S]> {
+        let mut a = [Self::default(); S];
+        for i in 0..S {
+            a[i] = Self::read::<E>(buf)?;
+        }
+        return Ok(a);
+    }
+}
+
 from_buffer_and_readable_impl!(u8, 1);
 from_buffer_and_readable_impl!(u16, 2);
 from_buffer_and_readable_impl!(u32, 4);
