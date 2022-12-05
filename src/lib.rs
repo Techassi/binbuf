@@ -40,6 +40,6 @@ pub mod prelude {
         error::BufferError,
         read::{ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ToReadBuffer},
         write::{ToWriteBuffer, WriteBuffer, WriteBufferResult, Writeable},
-        BigEndian, LittleEndian,
+        BigEndian, Endianness, LittleEndian,
     };
 }
