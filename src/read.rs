@@ -1,4 +1,7 @@
-use crate::{error::BufferError, macros::from_buffer_and_readable_impl, Endianness};
+use crate::{
+    error::BufferError, macros::from_buffer_and_readable_impl, BigEndian, Endianness, LittleEndian,
+    SupportedEndianness,
+};
 
 pub type ReadBufferResult<T> = Result<T, BufferError>;
 
@@ -256,18 +259,113 @@ pub trait FromBuffer: Sized {
 /// ### Example
 ///
 /// ```
-/// use binbuf::{ReadBuffer, Readable};
+/// use binbuf::prelude::*;
 ///
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
 /// let mut b = ReadBuffer::new(d.as_slice());
-/// assert_eq!(u16::read(&mut b), Ok(17752));
+/// assert_eq!(u16::read::<BigEndian>(&mut b), Ok(17752));
 /// ```
-pub trait Readable: Sized {
+pub trait Readable: Sized + std::fmt::Debug {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness;
+
     /// Read [`Self`] from a [`ReadBuffer`].
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// let i = u16::read::<BigEndian>(&mut b).unwrap();
+    /// assert_eq!(i, 17752);
+    /// ```
     fn read<E: Endianness>(buf: &mut ReadBuffer) -> ReadBufferResult<Self>;
+
+    /// Returns if this type [`Self`] supports the requested endianness
+    /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
+    /// returned.
+    fn supports<E: Endianness>() -> ReadBufferResult<()> {
+        if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
+            return Err(BufferError::UnsupportedEndianness);
+        }
+
+        Ok(())
+    }
+
+    /// Read [`Self`] with big endian encoding from a [`ReadBuffer`].
+    /// Internally this calls `Self::read::<BigEndian>()`.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// let i = u16::read_be(&mut b).unwrap();
+    /// assert_eq!(i, 17752);
+    /// ```
+    fn read_be(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
+        Self::read::<BigEndian>(buf)
+    }
+
+    /// Read [`Self`] with little endian encoding from a [`ReadBuffer`].
+    /// Internally this calls `Self::read::<LittleEndian>()`.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// let i = u16::read_le(&mut b).unwrap();
+    /// assert_eq!(i, 22597);
+    /// ```
+    fn read_le(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
+        Self::read::<LittleEndian>(buf)
+    }
 }
 
+/// Multiple values of types which implement this trait can be read at once
+/// from a [`ReadBuffer`]. An implementation for all sized unsigned integers is
+/// provided.
+///
+/// ### Example
+///
+/// ```
+/// use binbuf::prelude::*;
+///
+/// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
+/// let mut b = ReadBuffer::new(d.as_slice());
+///
+/// let [i1, i2] = u16::read_multi::<BigEndian, 2>(&mut b).unwrap();
+///
+/// assert_eq!(i1, 17752);
+/// assert_eq!(i2, 16717);
+/// ```
 pub trait ReadableMulti: Readable + Default + Copy {
+    /// Read multiple [`Self`] from a [`ReadBuffer`].
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// let [i1, i2, i3, i4] = u16::read_multi::<BigEndian, 4>(&mut b).unwrap();
+    ///
+    /// assert_eq!(i1, 17752);
+    /// assert_eq!(i2, 16717);
+    /// assert_eq!(i3, 20556);
+    /// assert_eq!(i4, 17697);
+    /// ```
     fn read_multi<E: Endianness, const S: usize>(
         buf: &mut ReadBuffer,
     ) -> ReadBufferResult<[Self; S]> {
@@ -276,6 +374,14 @@ pub trait ReadableMulti: Readable + Default + Copy {
             a[i] = Self::read::<E>(buf)?;
         }
         return Ok(a);
+    }
+
+    fn read_multi_be<const S: usize>(buf: &mut ReadBuffer) -> ReadBufferResult<[Self; S]> {
+        Self::read_multi::<BigEndian, S>(buf)
+    }
+
+    fn read_multi_le<const S: usize>(buf: &mut ReadBuffer) -> ReadBufferResult<[Self; S]> {
+        Self::read_multi::<LittleEndian, S>(buf)
     }
 }
 

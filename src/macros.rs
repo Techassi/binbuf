@@ -17,6 +17,8 @@ macro_rules! from_buffer_and_readable_impl {
         }
 
         impl Readable for $SelfT {
+            const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
+
             fn read<E: Endianness>(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
                 E::read(buf)
             }

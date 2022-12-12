@@ -1,4 +1,6 @@
-use crate::{error::BufferError, macros::into_buffer_and_writeable_impl, Endianness};
+use crate::{
+    error::BufferError, macros::into_buffer_and_writeable_impl, BigEndian, Endianness, LittleEndian,
+};
 
 pub type WriteBufferResult = Result<usize, BufferError>;
 
@@ -79,6 +81,14 @@ pub trait IntoBuffer: Sized {
 
 pub trait Writeable: Sized {
     fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteBufferResult;
+
+    fn write_be(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+        self.write::<BigEndian>(buf)
+    }
+
+    fn write_le(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+        self.write::<LittleEndian>(buf)
+    }
 }
 
 into_buffer_and_writeable_impl!(u8, 1);
@@ -86,3 +96,13 @@ into_buffer_and_writeable_impl!(u16, 2);
 into_buffer_and_writeable_impl!(u32, 4);
 into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
+
+impl<T: Writeable> Writeable for Vec<T> {
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+        let mut written = 0;
+        for item in self.iter() {
+            written += item.write::<E>(buf)?
+        }
+        Ok(written)
+    }
+}
