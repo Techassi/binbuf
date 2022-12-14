@@ -30,6 +30,7 @@ macro_rules! from_buffer_and_readable_impl {
         }
 
         impl<'a> ReadableMulti<'a> for $SelfT {}
+        impl<'a> ReadableMultiVerify<'a> for $SelfT {}
     };
 }
 

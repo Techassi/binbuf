@@ -503,6 +503,27 @@ pub trait ReadableMulti<'a>: Readable<'a> + Default + Copy {
     }
 }
 
+pub trait ReadableMultiVerify<'a>: ReadableMulti<'a> + ReadableVerify<'a> {
+    fn read_multi_verify<E: Endianness<'a>, const S: usize>(
+        buf: &mut impl ToReadBuffer<'a>,
+    ) -> Result<[Self; S], Self::Error> {
+        Self::supports::<E>()?;
+        Self::read_multi::<E, S>(buf)
+    }
+
+    fn read_multi_verify_be<const S: usize>(
+        buf: &mut impl ToReadBuffer<'a>,
+    ) -> Result<[Self; S], Self::Error> {
+        Self::read_multi_verify::<BigEndian, S>(buf)
+    }
+
+    fn read_multi_verify_le<const S: usize>(
+        buf: &mut impl ToReadBuffer<'a>,
+    ) -> Result<[Self; S], Self::Error> {
+        Self::read_multi_verify::<LittleEndian, S>(buf)
+    }
+}
+
 from_buffer_and_readable_impl!(u8, 1);
 from_buffer_and_readable_impl!(u16, 2);
 from_buffer_and_readable_impl!(u32, 4);

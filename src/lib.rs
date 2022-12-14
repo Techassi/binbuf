@@ -63,7 +63,8 @@ pub mod prelude {
     pub use crate::{
         error::BufferError,
         read::{
-            ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ReadableVerify, ToReadBuffer,
+            ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ReadableMultiVerify,
+            ReadableVerify, ToReadBuffer,
         },
         write::{ToWriteBuffer, WriteBuffer, WriteBufferResult, Writeable},
         BigEndian, Endianness, LittleEndian, SupportedEndianness,
