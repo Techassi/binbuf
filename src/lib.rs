@@ -14,15 +14,15 @@ pub enum SupportedEndianness {
     Both,
 }
 
-pub trait Endianness<'a> {
+pub trait Endianness {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
-    fn read<T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T>;
+    fn read<'a, T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T>;
     fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
 }
 
 pub struct BigEndian {}
-impl<'a> Endianness<'a> for BigEndian {
+impl Endianness for BigEndian {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool {
         match supported {
             SupportedEndianness::BigEndian => true,
@@ -31,7 +31,7 @@ impl<'a> Endianness<'a> for BigEndian {
         }
     }
 
-    fn read<T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T> {
+    fn read<'a, T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T> {
         T::as_be(buf)
     }
 
@@ -41,7 +41,7 @@ impl<'a> Endianness<'a> for BigEndian {
 }
 
 pub struct LittleEndian {}
-impl<'a> Endianness<'a> for LittleEndian {
+impl Endianness for LittleEndian {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool {
         match supported {
             SupportedEndianness::BigEndian => false,
@@ -50,7 +50,7 @@ impl<'a> Endianness<'a> for LittleEndian {
         }
     }
 
-    fn read<T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T> {
+    fn read<'a, T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T> {
         T::as_le(buf)
     }
 

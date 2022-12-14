@@ -335,7 +335,7 @@ pub trait Readable<'a>: Sized {
     /// let i = u16::read::<BigEndian>(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read<E: Endianness<'a>>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error>;
+    fn read<E: Endianness>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error>;
 
     /// Read [`Self`] with big endian encoding from a [`ReadBuffer`].
     /// Internally this calls `Self::read::<BigEndian>()`.
@@ -411,9 +411,7 @@ pub trait ReadableVerify<'a>: Readable<'a> {
     /// let le = u16::read_verify::<LittleEndian>(&mut b).unwrap();
     /// assert_eq!(le, 22597);
     /// ```
-    fn read_verify<E: Endianness<'a>>(
-        buf: &mut impl ToReadBuffer<'a>,
-    ) -> Result<Self, Self::Error> {
+    fn read_verify<E: Endianness>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
         Self::supports::<E>()?;
         Self::read::<E>(buf)
     }
@@ -435,7 +433,7 @@ pub trait ReadableVerify<'a>: Readable<'a> {
     /// Returns if this type [`Self`] supports the requested endianness
     /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
     /// returned.
-    fn supports<E: Endianness<'a>>() -> ReadBufferResult<()> {
+    fn supports<E: Endianness>() -> ReadBufferResult<()> {
         if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
             return Err(BufferError::UnsupportedEndianness);
         }
@@ -479,7 +477,7 @@ pub trait ReadableMulti<'a>: Readable<'a> + Default + Copy {
     /// assert_eq!(i3, 20556);
     /// assert_eq!(i4, 17697);
     /// ```
-    fn read_multi<E: Endianness<'a>, const S: usize>(
+    fn read_multi<E: Endianness, const S: usize>(
         buf: &mut impl ToReadBuffer<'a>,
     ) -> Result<[Self; S], Self::Error> {
         let mut a = [Self::default(); S];
@@ -504,7 +502,7 @@ pub trait ReadableMulti<'a>: Readable<'a> + Default + Copy {
 }
 
 pub trait ReadableMultiVerify<'a>: ReadableMulti<'a> + ReadableVerify<'a> {
-    fn read_multi_verify<E: Endianness<'a>, const S: usize>(
+    fn read_multi_verify<E: Endianness, const S: usize>(
         buf: &mut impl ToReadBuffer<'a>,
     ) -> Result<[Self; S], Self::Error> {
         Self::supports::<E>()?;

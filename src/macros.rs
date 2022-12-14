@@ -18,9 +18,7 @@ macro_rules! from_buffer_and_readable_impl {
 
         impl<'a> Readable<'a> for $SelfT {
             type Error = BufferError;
-            fn read<E: Endianness<'a>>(
-                buf: &mut impl ToReadBuffer<'a>,
-            ) -> Result<Self, Self::Error> {
+            fn read<E: Endianness>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
                 E::read(buf)
             }
         }
@@ -53,7 +51,7 @@ macro_rules! into_buffer_and_writeable_impl {
         impl<'a> Writeable<'a> for $SelfT {
             type Error = BufferError;
 
-            fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+            fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
                 E::write(*self, buf)
             }
         }

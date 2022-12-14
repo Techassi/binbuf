@@ -83,7 +83,7 @@ pub trait IntoBuffer: Sized {
 pub trait Writeable<'a>: Sized {
     type Error: std::error::Error + From<BufferError>;
 
-    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>;
+    fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>;
 
     fn write_be(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         self.write::<BigEndian>(buf)
@@ -97,7 +97,7 @@ pub trait Writeable<'a>: Sized {
 pub trait WriteableVerify<'a>: Writeable<'a> {
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
-    fn write_verify<E: Endianness<'a>>(
+    fn write_verify<E: Endianness>(
         &self,
         buf: &mut impl ToWriteBuffer,
     ) -> Result<usize, Self::Error> {
@@ -116,7 +116,7 @@ pub trait WriteableVerify<'a>: Writeable<'a> {
     /// Returns if this type [`Self`] supports the requested endianness
     /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
     /// returned.
-    fn supports<E: Endianness<'a>>() -> WriteBufferResult {
+    fn supports<E: Endianness>() -> WriteBufferResult {
         if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
             return Err(BufferError::UnsupportedEndianness);
         }
@@ -134,7 +134,7 @@ into_buffer_and_writeable_impl!(u128, 16);
 impl<'a, T: Writeable<'a>> Writeable<'a> for Vec<T> {
     type Error = T::Error;
 
-    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         let mut written = 0;
         for item in self.iter() {
             written += item.write::<E>(buf)?
