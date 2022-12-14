@@ -75,18 +75,18 @@ impl WriteBuffer {
 pub trait IntoBuffer: Sized {
     const SIZE: usize;
 
-    fn as_be(&self, buf: &mut WriteBuffer) -> WriteBufferResult;
-    fn as_le(&self, buf: &mut WriteBuffer) -> WriteBufferResult;
+    fn as_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
+    fn as_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
 }
 
-pub trait Writeable: Sized {
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteBufferResult;
+pub trait Writeable<'a>: Sized {
+    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
 
-    fn write_be(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+    fn write_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
         self.write::<BigEndian>(buf)
     }
 
-    fn write_le(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+    fn write_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
         self.write::<LittleEndian>(buf)
     }
 }
@@ -97,8 +97,8 @@ into_buffer_and_writeable_impl!(u32, 4);
 into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
 
-impl<T: Writeable> Writeable for Vec<T> {
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+impl<'a, T: Writeable<'a>> Writeable<'a> for Vec<T> {
+    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
         let mut written = 0;
         for item in self.iter() {
             written += item.write::<E>(buf)?

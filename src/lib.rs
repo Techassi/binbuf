@@ -1,6 +1,6 @@
 use crate::{
-    read::{FromBuffer, ReadBuffer, ReadBufferResult},
-    write::{IntoBuffer, WriteBuffer, WriteBufferResult},
+    read::{FromBuffer, ReadBufferResult, ToReadBuffer},
+    write::{IntoBuffer, ToWriteBuffer, WriteBufferResult},
 };
 
 pub mod error;
@@ -14,15 +14,15 @@ pub enum SupportedEndianness {
     Both,
 }
 
-pub trait Endianness {
+pub trait Endianness<'a> {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T>;
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> WriteBufferResult;
+    fn read<T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T>;
+    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
 }
 
 pub struct BigEndian {}
-impl Endianness for BigEndian {
+impl<'a> Endianness<'a> for BigEndian {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool {
         match supported {
             SupportedEndianness::BigEndian => true,
@@ -31,17 +31,17 @@ impl Endianness for BigEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T> {
+    fn read<T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T> {
         T::as_be(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> WriteBufferResult {
+    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
         n.as_be(buf)
     }
 }
 
 pub struct LittleEndian {}
-impl Endianness for LittleEndian {
+impl<'a> Endianness<'a> for LittleEndian {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool {
         match supported {
             SupportedEndianness::BigEndian => false,
@@ -50,11 +50,11 @@ impl Endianness for LittleEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T> {
+    fn read<T: FromBuffer<'a>>(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<T> {
         T::as_le(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> WriteBufferResult {
+    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
         n.as_le(buf)
     }
 }

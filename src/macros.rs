@@ -2,32 +2,34 @@ pub use binbuf_macros::*;
 
 macro_rules! from_buffer_and_readable_impl {
     ($SelfT:ty, $Size:expr) => {
-        impl FromBuffer for $SelfT {
+        impl<'a> FromBuffer<'a> for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
+            fn as_be(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_be_bytes(b.try_into().unwrap()))
             }
 
-            fn as_le(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
+            fn as_le(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_le_bytes(b.try_into().unwrap()))
             }
         }
 
-        impl Readable for $SelfT {
+        impl<'a> Readable<'a> for $SelfT {
             type Error = BufferError;
-            fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+            fn read<E: Endianness<'a>>(
+                buf: &mut impl ToReadBuffer<'a>,
+            ) -> Result<Self, Self::Error> {
                 E::read(buf)
             }
         }
 
-        impl ReadableVerify for $SelfT {
+        impl<'a> ReadableVerify<'a> for $SelfT {
             const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
         }
 
-        impl ReadableMulti for $SelfT {}
+        impl<'a> ReadableMulti<'a> for $SelfT {}
     };
 }
 
@@ -36,19 +38,19 @@ macro_rules! into_buffer_and_writeable_impl {
         impl IntoBuffer for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+            fn as_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
                 let b = self.to_be_bytes();
                 buf.write_slice(&b[..])
             }
 
-            fn as_le(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+            fn as_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
                 let b = self.to_le_bytes();
                 buf.write_slice(&b[..])
             }
         }
 
-        impl Writeable for $SelfT {
-            fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteBufferResult {
+        impl<'a> Writeable<'a> for $SelfT {
+            fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
                 E::write(*self, buf)
             }
         }
