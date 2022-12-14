@@ -8,6 +8,8 @@ pub type ReadBufferResult<T> = Result<T, BufferError>;
 pub trait ToReadBuffer<'a> {
     fn new(buf: &'a [u8]) -> Self;
     fn pop(&mut self) -> ReadBufferResult<u8>;
+    fn reset(&mut self);
+
     fn skip(&mut self) -> ReadBufferResult<()>;
     fn skipn(&mut self, n: usize) -> ReadBufferResult<()>;
 
@@ -76,6 +78,10 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
         }
 
         Ok(())
+    }
+
+    fn reset(&mut self) {
+        self.rest = self.buf;
     }
 
     /// Pop off `n` bytes from the front of the buffer but do not return the
