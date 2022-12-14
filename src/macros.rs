@@ -17,11 +17,14 @@ macro_rules! from_buffer_and_readable_impl {
         }
 
         impl Readable for $SelfT {
-            const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-
-            fn read<E: Endianness>(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
+            type Error = BufferError;
+            fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
                 E::read(buf)
             }
+        }
+
+        impl ReadableVerify for $SelfT {
+            const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
         }
 
         impl ReadableMulti for $SelfT {}

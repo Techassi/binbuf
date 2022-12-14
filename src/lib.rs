@@ -62,7 +62,9 @@ impl Endianness for LittleEndian {
 pub mod prelude {
     pub use crate::{
         error::BufferError,
-        read::{ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ToReadBuffer},
+        read::{
+            ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ReadableVerify, ToReadBuffer,
+        },
         write::{ToWriteBuffer, WriteBuffer, WriteBufferResult, Writeable},
         BigEndian, Endianness, LittleEndian, SupportedEndianness,
     };
