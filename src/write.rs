@@ -81,13 +81,15 @@ pub trait IntoBuffer: Sized {
 }
 
 pub trait Writeable<'a>: Sized {
-    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
+    type Error: std::error::Error + From<BufferError>;
 
-    fn write_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>;
+
+    fn write_be(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         self.write::<BigEndian>(buf)
     }
 
-    fn write_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write_le(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         self.write::<LittleEndian>(buf)
     }
 }
@@ -95,16 +97,19 @@ pub trait Writeable<'a>: Sized {
 pub trait WriteableVerify<'a>: Writeable<'a> {
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
-    fn write_verify<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write_verify<E: Endianness<'a>>(
+        &self,
+        buf: &mut impl ToWriteBuffer,
+    ) -> Result<usize, Self::Error> {
         Self::supports::<E>()?;
         self.write::<E>(buf)
     }
 
-    fn write_verify_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write_verify_be(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         self.write_verify::<BigEndian>(buf)
     }
 
-    fn write_verify_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write_verify_le(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         self.write_verify::<LittleEndian>(buf)
     }
 
@@ -127,7 +132,9 @@ into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
 
 impl<'a, T: Writeable<'a>> Writeable<'a> for Vec<T> {
-    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    type Error = T::Error;
+
+    fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         let mut written = 0;
         for item in self.iter() {
             written += item.write::<E>(buf)?
