@@ -51,6 +51,8 @@ macro_rules! into_buffer_and_writeable_impl {
         }
 
         impl<'a> Writeable<'a> for $SelfT {
+            type Error = BufferError;
+
             fn write<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
                 E::write(*self, buf)
             }
