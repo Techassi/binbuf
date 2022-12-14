@@ -11,6 +11,11 @@ pub enum BufferError {
     #[error("Invalid buffer jump index")]
     InvalidJumpIndex,
 
+    // This indicates that somewhere in the buffer the reader encountered
+    // invalid / unexpected data.
+    #[error("Invalid data")]
+    InvalidData,
+
     #[error("Buffer too short")]
     BufTooShort,
 }
