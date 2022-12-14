@@ -1,5 +1,6 @@
 use crate::{
-    error::BufferError, macros::into_buffer_and_writeable_impl, BigEndian, Endianness, LittleEndian,
+    error::BufferError, macros::into_buffer_and_writeable_impl, BigEndian, Endianness,
+    LittleEndian, SupportedEndianness,
 };
 
 pub type WriteBufferResult = Result<usize, BufferError>;
@@ -91,6 +92,34 @@ pub trait Writeable<'a>: Sized {
     }
 }
 
+pub trait WriteableVerify<'a>: Writeable<'a> {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness;
+
+    fn write_verify<E: Endianness<'a>>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+        Self::supports::<E>()?;
+        self.write::<E>(buf)
+    }
+
+    fn write_verify_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+        self.write_verify::<BigEndian>(buf)
+    }
+
+    fn write_verify_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+        self.write_verify::<LittleEndian>(buf)
+    }
+
+    /// Returns if this type [`Self`] supports the requested endianness
+    /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
+    /// returned.
+    fn supports<E: Endianness<'a>>() -> WriteBufferResult {
+        if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
+            return Err(BufferError::UnsupportedEndianness);
+        }
+
+        Ok(0)
+    }
+}
+
 into_buffer_and_writeable_impl!(u8, 1);
 into_buffer_and_writeable_impl!(u16, 2);
 into_buffer_and_writeable_impl!(u32, 4);
@@ -105,4 +134,8 @@ impl<'a, T: Writeable<'a>> Writeable<'a> for Vec<T> {
         }
         Ok(written)
     }
+}
+
+impl<'a, T: WriteableVerify<'a>> WriteableVerify<'a> for Vec<T> {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = T::SUPPORTED_ENDIANNESS;
 }
