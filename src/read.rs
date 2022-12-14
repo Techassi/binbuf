@@ -9,10 +9,15 @@ pub trait ToReadBuffer<'a> {
     fn new(buf: &'a [u8]) -> Self;
     fn pop(&mut self) -> ReadBufferResult<u8>;
     fn skip(&mut self) -> ReadBufferResult<()>;
+    fn skipn(&mut self, n: usize) -> ReadBufferResult<()>;
+
     fn peek(&self) -> Option<u8>;
+    fn peekn<const N: usize>(&self) -> Option<[u8; N]>;
+
     fn offset(&self) -> usize;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
+
     fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&'a [u8]>;
     fn read_vec(&mut self, nbytes: usize) -> ReadBufferResult<Vec<u8>>;
 }
@@ -28,7 +33,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
     /// let b = ReadBuffer::new(d.as_slice());
@@ -44,7 +49,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::{ReadBuffer, BufferError};
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69, 88];
     /// let mut b = ReadBuffer::new(d.as_slice());
@@ -73,13 +78,31 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
         Ok(())
     }
 
+    /// Pop off `n` bytes from the front of the buffer but do not return the
+    /// popped off bytes. This is rarely useful other than in combination with
+    /// `peekn()`.
+    fn skipn(&mut self, n: usize) -> ReadBufferResult<()> {
+        if n > self.len() {
+            return Err(BufferError::BufTooShort);
+        }
+
+        if n == 1 {
+            return self.skip();
+        }
+
+        let (_, rest) = self.rest.split_at(n);
+        self.rest = rest;
+
+        Ok(())
+    }
+
     /// Peek at the first byte of the buffer. If the buffer is empty
     /// [`None`] is returned.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69];
     /// let mut b = ReadBuffer::new(d.as_slice());
@@ -95,12 +118,37 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
         }
     }
 
+    /// Peek at the first `n` bytes of the buffer. If the buffer is empty
+    /// [`None`] is returned.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![69, 88];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// assert_eq!(b.peekn::<2>(), Some([69, 88]));
+    /// assert_eq!(b.skipn(2), Ok(()));
+    /// assert_eq!(b.peek(), None);
+    /// ```
+    fn peekn<const N: usize>(&self) -> Option<[u8; N]> {
+        match self.rest.get(0..N) {
+            Some(s) => match TryInto::<[u8; N]>::try_into(s) {
+                Ok(b) => Some(b),
+                Err(_) => None,
+            },
+            None => None,
+        }
+    }
+
     /// Returns the current offset.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69, 88];
     /// let mut b = ReadBuffer::new(d.as_slice());
@@ -117,7 +165,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69, 88];
     /// let mut b = ReadBuffer::new(d.as_slice());
@@ -135,7 +183,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69];
     /// let mut b = ReadBuffer::new(d.as_slice());
@@ -155,7 +203,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
     /// let mut b = ReadBuffer::new(d.as_slice());
@@ -178,7 +226,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::ReadBuffer;
+    /// use binbuf::prelude::*;
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
     /// let mut b = ReadBuffer::new(d.as_slice());
