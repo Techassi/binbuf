@@ -80,7 +80,7 @@ pub trait IntoBuffer: Sized {
     fn as_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
 }
 
-pub trait Writeable<'a>: Sized {
+pub trait Writeable: Sized {
     type Error: std::error::Error + From<BufferError>;
 
     fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>;
@@ -94,7 +94,7 @@ pub trait Writeable<'a>: Sized {
     }
 }
 
-pub trait WriteableVerify<'a>: Writeable<'a> {
+pub trait WriteableVerify: Writeable {
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
     fn write_verify<E: Endianness>(
@@ -131,7 +131,7 @@ into_buffer_and_writeable_impl!(u32, 4);
 into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
 
-impl<'a, T: Writeable<'a>> Writeable<'a> for Vec<T> {
+impl<'a, T: Writeable> Writeable for Vec<T> {
     type Error = T::Error;
 
     fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
@@ -143,6 +143,6 @@ impl<'a, T: Writeable<'a>> Writeable<'a> for Vec<T> {
     }
 }
 
-impl<'a, T: WriteableVerify<'a>> WriteableVerify<'a> for Vec<T> {
+impl<'a, T: WriteableVerify> WriteableVerify for Vec<T> {
     const SUPPORTED_ENDIANNESS: SupportedEndianness = T::SUPPORTED_ENDIANNESS;
 }

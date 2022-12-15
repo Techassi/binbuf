@@ -6,7 +6,7 @@ fn test_writeable_impl() {
         inner: u16,
     }
 
-    impl<'a> Writeable<'a> for Data {
+    impl Writeable for Data {
         type Error = BufferError;
 
         fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
