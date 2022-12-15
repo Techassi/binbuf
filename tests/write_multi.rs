@@ -6,11 +6,12 @@ fn test_write_multi_u8() {
     let mut b = WriteBuffer::new();
 
     match d.write::<BigEndian>(&mut b) {
-        Ok(n) => assert_eq!(n, 2),
+        Ok(n) => {
+            assert_eq!(n, 2);
+            assert_eq!(b.bytes(), &[69, 88]);
+        }
         Err(err) => panic!("{}", err),
     }
-
-    assert_eq!(b.bytes(), &[69, 88])
 }
 
 #[test]
@@ -19,11 +20,12 @@ fn test_write_multi_u16() {
     let mut b = WriteBuffer::new();
 
     match d.write::<BigEndian>(&mut b) {
-        Ok(n) => assert_eq!(n, 4),
+        Ok(n) => {
+            assert_eq!(n, 4);
+            assert_eq!(b.bytes(), &[69, 88, 65, 77]);
+        }
         Err(err) => panic!("{}", err),
     }
-
-    assert_eq!(b.bytes(), &[69, 88, 65, 77])
 }
 
 #[test]
@@ -32,11 +34,12 @@ fn test_write_multi_u32() {
     let mut b = WriteBuffer::new();
 
     match d.write::<BigEndian>(&mut b) {
-        Ok(n) => assert_eq!(n, 8),
+        Ok(n) => {
+            assert_eq!(n, 8);
+            assert_eq!(b.bytes(), &[69, 88, 65, 77, 80, 76, 69, 33]);
+        }
         Err(err) => panic!("{}", err),
     }
-
-    assert_eq!(b.bytes(), &[69, 88, 65, 77, 80, 76, 69, 33])
 }
 
 #[test]
@@ -45,11 +48,12 @@ fn test_write_multi_u64() {
     let mut b = WriteBuffer::new();
 
     match d.write::<BigEndian>(&mut b) {
-        Ok(n) => assert_eq!(n, 8),
+        Ok(n) => {
+            assert_eq!(n, 8);
+            assert_eq!(b.bytes(), &[69, 88, 65, 77, 80, 76, 69, 33]);
+        }
         Err(err) => panic!("{}", err),
     }
-
-    assert_eq!(b.bytes(), &[69, 88, 65, 77, 80, 76, 69, 33])
 }
 
 #[test]
@@ -58,12 +62,13 @@ fn test_write_multi_u128() {
     let mut b = WriteBuffer::new();
 
     match d.write::<BigEndian>(&mut b) {
-        Ok(n) => assert_eq!(n, 16),
+        Ok(n) => {
+            assert_eq!(n, 16);
+            assert_eq!(
+                b.bytes(),
+                &[69, 88, 65, 77, 80, 76, 69, 33, 69, 88, 65, 77, 80, 76, 69, 33]
+            );
+        }
         Err(err) => panic!("{}", err),
     }
-
-    assert_eq!(
-        b.bytes(),
-        &[69, 88, 65, 77, 80, 76, 69, 33, 69, 88, 65, 77, 80, 76, 69, 33]
-    )
 }
