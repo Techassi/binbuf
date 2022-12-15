@@ -7,13 +7,16 @@ pub type WriteBufferResult = Result<usize, BufferError>;
 
 pub trait ToWriteBuffer {
     fn new() -> Self;
+    fn push(&mut self, b: u8);
+    fn clear(&mut self);
+
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn push(&mut self, b: u8);
+
     fn write_slice(&mut self, s: &[u8]) -> WriteBufferResult;
     fn write_vec(&mut self, v: &mut Vec<u8>) -> WriteBufferResult;
+
     fn bytes(&self) -> &[u8];
-    fn clear(&mut self);
 }
 
 pub struct WriteBuffer {
@@ -21,8 +24,29 @@ pub struct WriteBuffer {
 }
 
 impl ToWriteBuffer for WriteBuffer {
+    /// Create a new [`WriteBuffer`] backed by a `Vec<u8>`.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new();
+    /// 17752u16.write::<BigEndian>(&mut b).unwrap();
+    ///
+    /// assert_eq!(b.len(), 2);
+    /// assert_eq!(b.bytes(), &[69, 88]);
+    /// ```
     fn new() -> Self {
         WriteBuffer { buf: Vec::new() }
+    }
+
+    fn push(&mut self, b: u8) {
+        self.buf.push(b);
+    }
+
+    fn clear(&mut self) {
+        self.buf.clear()
     }
 
     fn len(&self) -> usize {
@@ -31,10 +55,6 @@ impl ToWriteBuffer for WriteBuffer {
 
     fn is_empty(&self) -> bool {
         return self.buf.len() == 0;
-    }
-
-    fn push(&mut self, b: u8) {
-        self.buf.push(b);
     }
 
     fn write_slice(&mut self, s: &[u8]) -> WriteBufferResult {
@@ -49,10 +69,6 @@ impl ToWriteBuffer for WriteBuffer {
 
     fn bytes(&self) -> &[u8] {
         return self.buf.as_slice();
-    }
-
-    fn clear(&mut self) {
-        self.buf.clear()
     }
 }
 
@@ -130,6 +146,7 @@ into_buffer_and_writeable_impl!(u16, 2);
 into_buffer_and_writeable_impl!(u32, 4);
 into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
+into_buffer_and_writeable_impl!(usize, (usize::BITS / 8) as usize);
 
 impl<'a, T: Writeable> Writeable for Vec<T> {
     type Error = T::Error;
