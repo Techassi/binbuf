@@ -5,8 +5,7 @@ use crate::{
 
 pub type ReadBufferResult<T> = Result<T, BufferError>;
 
-pub trait ToReadBuffer<'a> {
-    fn new(buf: &'a [u8]) -> Self;
+pub trait ToReadBuffer {
     fn pop(&mut self) -> ReadBufferResult<u8>;
     fn reset(&mut self);
 
@@ -20,7 +19,7 @@ pub trait ToReadBuffer<'a> {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
 
-    fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&'a [u8]>;
+    fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&[u8]>;
     fn read_vec(&mut self, nbytes: usize) -> ReadBufferResult<Vec<u8>>;
 }
 
@@ -29,22 +28,7 @@ pub struct ReadBuffer<'a> {
     rest: &'a [u8],
 }
 
-impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
-    /// Create a new [`ReadBuffer`] based on a slice of `u8`s.
-    ///
-    /// ### Example
-    ///
-    /// ```
-    /// use binbuf::prelude::*;
-    ///
-    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let b = ReadBuffer::new(d.as_slice());
-    /// assert_eq!(b.len(), 8);
-    /// ```
-    fn new(buf: &'a [u8]) -> Self {
-        ReadBuffer { buf, rest: buf }
-    }
-
+impl<'a> ToReadBuffer for ReadBuffer<'a> {
     /// Read a single byte from the front of the buffer. If the buffer is
     /// empty, an error is returned.
     ///
@@ -217,7 +201,7 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
     /// assert_eq!(b.read_slice(4), Ok([69, 88, 65, 77].as_slice()));
     /// assert_eq!(b.len(), 4);
     /// ```
-    fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&'a [u8]> {
+    fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&[u8]> {
         if nbytes > self.len() {
             return Err(BufferError::BufTooShort);
         }
@@ -246,6 +230,21 @@ impl<'a> ToReadBuffer<'a> for ReadBuffer<'a> {
 }
 
 impl<'a> ReadBuffer<'a> {
+    /// Create a new [`ReadBuffer`] based on a slice of `u8`s.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    /// let b = ReadBuffer::new(d.as_slice());
+    /// assert_eq!(b.len(), 8);
+    /// ```
+    pub fn new(buf: &'a [u8]) -> Self {
+        ReadBuffer { buf, rest: buf }
+    }
+
     /// Read a character string with an optional maximum length of `max_len`.
     /// A character string is composed of one byte indicating the number of
     /// bytes the string is made of. The string bytes then follow.
@@ -282,7 +281,7 @@ impl<'a> ReadBuffer<'a> {
     /// assert_eq!(b.read_char_string(Some(3)), Err(BufferError::MaxLengthOverflow));
     /// assert_eq!(b.len(), 8);
     /// ```
-    pub fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&'a [u8]> {
+    pub fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&[u8]> {
         let len = match self.peek() {
             Some(len) => len as usize,
             None => return Err(BufferError::BufTooShort),
@@ -302,8 +301,8 @@ impl<'a> ReadBuffer<'a> {
 pub trait FromBuffer<'a>: Sized {
     const SIZE: usize;
 
-    fn as_be(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<Self>;
-    fn as_le(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<Self>;
+    fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self>;
+    fn as_le(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self>;
 }
 
 /// All types which implement this trait can be constructed by reading from
@@ -319,7 +318,7 @@ pub trait FromBuffer<'a>: Sized {
 /// let mut b = ReadBuffer::new(d.as_slice());
 /// assert_eq!(u16::read::<BigEndian>(&mut b), Ok(17752));
 /// ```
-pub trait Readable<'a>: Sized {
+pub trait Readable: Sized {
     type Error: std::error::Error + From<BufferError>;
 
     /// Read [`Self`] from a [`ReadBuffer`].
@@ -335,7 +334,7 @@ pub trait Readable<'a>: Sized {
     /// let i = u16::read::<BigEndian>(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read<E: Endianness>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error>;
+    fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error>;
 
     /// Read [`Self`] with big endian encoding from a [`ReadBuffer`].
     /// Internally this calls `Self::read::<BigEndian>()`.
@@ -351,7 +350,7 @@ pub trait Readable<'a>: Sized {
     /// let i = u16::read_be(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read_be(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
+    fn read_be(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         Self::read::<BigEndian>(buf)
     }
 
@@ -369,7 +368,7 @@ pub trait Readable<'a>: Sized {
     /// let i = u16::read_le(&mut b).unwrap();
     /// assert_eq!(i, 22597);
     /// ```
-    fn read_le(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
+    fn read_le(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         Self::read::<LittleEndian>(buf)
     }
 }
@@ -389,7 +388,7 @@ pub trait Readable<'a>: Sized {
 /// let be = u16::read_verify::<BigEndian>(&mut b).unwrap();
 /// assert_eq!(be, 17752);
 /// ```
-pub trait ReadableVerify<'a>: Readable<'a> {
+pub trait ReadableVerify: Readable {
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
     /// Read and verify that [`Self`] supports the provided endianness from a
@@ -411,7 +410,7 @@ pub trait ReadableVerify<'a>: Readable<'a> {
     /// let le = u16::read_verify::<LittleEndian>(&mut b).unwrap();
     /// assert_eq!(le, 22597);
     /// ```
-    fn read_verify<E: Endianness>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
+    fn read_verify<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         Self::supports::<E>()?;
         Self::read::<E>(buf)
     }
@@ -419,14 +418,14 @@ pub trait ReadableVerify<'a>: Readable<'a> {
     /// Read [`Self`] from a [`ReadBuffer`]. This will fail and return an error
     /// if the type does not support the big endian encoding. Internally this
     /// calls `Self::read_verify::<BigEndian>()`.
-    fn read_verify_be(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
+    fn read_verify_be(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         Self::read_verify::<BigEndian>(buf)
     }
 
     /// Read [`Self`] from a [`ReadBuffer`]. This will fail and return an error
     /// if the type does not support the little endian encoding. Internally
     /// this calls `Self::read_verify::<LittleEndian>()`.
-    fn read_verify_le(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
+    fn read_verify_le(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         Self::read_verify::<LittleEndian>(buf)
     }
 
@@ -459,7 +458,7 @@ pub trait ReadableVerify<'a>: Readable<'a> {
 /// assert_eq!(i1, 17752);
 /// assert_eq!(i2, 16717);
 /// ```
-pub trait ReadableMulti<'a>: Readable<'a> + Default + Copy {
+pub trait ReadableMulti: Readable + Default + Copy {
     /// Read multiple [`Self`] from a [`ReadBuffer`].
     ///
     /// ### Example
@@ -478,7 +477,7 @@ pub trait ReadableMulti<'a>: Readable<'a> + Default + Copy {
     /// assert_eq!(i4, 17697);
     /// ```
     fn read_multi<E: Endianness, const S: usize>(
-        buf: &mut impl ToReadBuffer<'a>,
+        buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         let mut a = [Self::default(); S];
         for i in 0..S {
@@ -489,34 +488,34 @@ pub trait ReadableMulti<'a>: Readable<'a> + Default + Copy {
     }
 
     fn read_multi_be<const S: usize>(
-        buf: &mut impl ToReadBuffer<'a>,
+        buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         Self::read_multi::<BigEndian, S>(buf)
     }
 
     fn read_multi_le<const S: usize>(
-        buf: &mut impl ToReadBuffer<'a>,
+        buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         Self::read_multi::<LittleEndian, S>(buf)
     }
 }
 
-pub trait ReadableMultiVerify<'a>: ReadableMulti<'a> + ReadableVerify<'a> {
+pub trait ReadableMultiVerify: ReadableMulti + ReadableVerify {
     fn read_multi_verify<E: Endianness, const S: usize>(
-        buf: &mut impl ToReadBuffer<'a>,
+        buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         Self::supports::<E>()?;
         Self::read_multi::<E, S>(buf)
     }
 
     fn read_multi_verify_be<const S: usize>(
-        buf: &mut impl ToReadBuffer<'a>,
+        buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         Self::read_multi_verify::<BigEndian, S>(buf)
     }
 
     fn read_multi_verify_le<const S: usize>(
-        buf: &mut impl ToReadBuffer<'a>,
+        buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         Self::read_multi_verify::<LittleEndian, S>(buf)
     }

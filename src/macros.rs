@@ -5,30 +5,30 @@ macro_rules! from_buffer_and_readable_impl {
         impl<'a> FromBuffer<'a> for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<Self> {
+            fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_be_bytes(b.try_into().unwrap()))
             }
 
-            fn as_le(buf: &mut impl ToReadBuffer<'a>) -> ReadBufferResult<Self> {
+            fn as_le(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_le_bytes(b.try_into().unwrap()))
             }
         }
 
-        impl<'a> Readable<'a> for $SelfT {
+        impl Readable for $SelfT {
             type Error = BufferError;
-            fn read<E: Endianness>(buf: &mut impl ToReadBuffer<'a>) -> Result<Self, Self::Error> {
+            fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
                 E::read(buf)
             }
         }
 
-        impl<'a> ReadableVerify<'a> for $SelfT {
+        impl ReadableVerify for $SelfT {
             const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
         }
 
-        impl<'a> ReadableMulti<'a> for $SelfT {}
-        impl<'a> ReadableMultiVerify<'a> for $SelfT {}
+        impl ReadableMulti for $SelfT {}
+        impl ReadableMultiVerify for $SelfT {}
     };
 }
 
