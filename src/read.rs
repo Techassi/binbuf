@@ -102,10 +102,7 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
     /// assert_eq!(b.peek(), None);
     /// ```
     fn peek(&self) -> Option<u8> {
-        match self.rest.first() {
-            Some(b) => Some(*b),
-            None => None,
-        }
+        self.rest.first().copied()
     }
 
     /// Peek at the first `n` bytes of the buffer. If the buffer is empty
@@ -147,7 +144,7 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
     /// assert_eq!(b.offset(), 1);
     /// ```
     fn offset(&self) -> usize {
-        return self.buf.len() - self.rest.len();
+        self.buf.len() - self.rest.len()
     }
 
     /// Returns the len of the remaining buffer.
@@ -165,7 +162,7 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
     /// assert_eq!(b.len(), 1);
     /// ```
     fn len(&self) -> usize {
-        return self.rest.len();
+        self.rest.len()
     }
 
     /// Returns if the buffer is empty.
@@ -183,7 +180,7 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
     /// assert_eq!(b.is_empty(), true);
     /// ```
     fn is_empty(&self) -> bool {
-        return self.rest.len() == 0;
+        self.rest.is_empty()
     }
 
     /// Read a slice of bytes with the length `nbytes` from the buffer. If the
@@ -208,7 +205,8 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
 
         let (slice, rest) = self.rest.split_at(nbytes);
         self.rest = rest;
-        return Ok(slice);
+
+        Ok(slice)
     }
 
     /// Read `nbytes` bytes from the buffer and return it as a [`Vec<u8>`].
@@ -480,11 +478,12 @@ pub trait ReadableMulti: Readable + Default + Copy {
         buf: &mut impl ToReadBuffer,
     ) -> Result<[Self; S], Self::Error> {
         let mut a = [Self::default(); S];
-        for i in 0..S {
-            println!("{}", buf.len());
-            a[i] = Self::read::<E>(buf)?;
+
+        for b in a.iter_mut().take(S) {
+            *b = Self::read::<E>(buf)?;
         }
-        return Ok(a);
+
+        Ok(a)
     }
 
     fn read_multi_be<const S: usize>(

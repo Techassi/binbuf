@@ -32,23 +32,21 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    if named_fields.len() == 0 {
+    if named_fields.is_empty() {
         return Ok(quote! {});
     }
 
-    let c: TokenStream;
-
-    if named_fields.len() == 1 {
-        c = match gen_one_field(named_fields.first().unwrap(), struct_name) {
+    let c: TokenStream = if named_fields.len() == 1 {
+        match gen_one_field(named_fields.first().unwrap(), struct_name) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
-        };
+        }
     } else {
-        c = match gen_multiple_fields(named_fields, struct_name) {
+        match gen_multiple_fields(named_fields, struct_name) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
-        };
-    }
+        }
+    };
 
     Ok(quote! {
         use binum::ReadExt;

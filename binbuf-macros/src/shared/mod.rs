@@ -87,7 +87,7 @@ pub fn extract_continuous_field_types(
             Err(err) => return Err(err),
         };
 
-        if entries.len() == 0 {
+        if entries.is_empty() {
             entries.push(TyEntry {
                 idents: vec![field.ident.unwrap()],
                 count: 1,
@@ -111,5 +111,5 @@ pub fn extract_continuous_field_types(
         })
     }
 
-    return Ok(entries);
+    Ok(entries)
 }

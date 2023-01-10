@@ -50,11 +50,11 @@ impl ToWriteBuffer for WriteBuffer {
     }
 
     fn len(&self) -> usize {
-        return self.buf.len();
+        self.buf.len()
     }
 
     fn is_empty(&self) -> bool {
-        return self.buf.len() == 0;
+        self.buf.is_empty()
     }
 
     fn write_slice(&mut self, s: &[u8]) -> WriteBufferResult {
@@ -84,7 +84,7 @@ impl WriteBuffer {
 
         match self.write_slice(s) {
             Ok(n) => Ok(n + 1),
-            Err(err) => return Err(err),
+            Err(err) => Err(err),
         }
     }
 }
@@ -148,7 +148,7 @@ into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
 into_buffer_and_writeable_impl!(usize, (usize::BITS / 8) as usize);
 
-impl<'a, T: Writeable> Writeable for Vec<T> {
+impl<T: Writeable> Writeable for Vec<T> {
     type Error = T::Error;
 
     fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
@@ -160,6 +160,6 @@ impl<'a, T: Writeable> Writeable for Vec<T> {
     }
 }
 
-impl<'a, T: WriteableVerify> WriteableVerify for Vec<T> {
+impl<T: WriteableVerify> WriteableVerify for Vec<T> {
     const SUPPORTED_ENDIANNESS: SupportedEndianness = T::SUPPORTED_ENDIANNESS;
 }
