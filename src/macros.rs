@@ -2,7 +2,7 @@ pub use binbuf_macros::*;
 
 macro_rules! from_buffer_and_readable_impl {
     ($SelfT:ty, $Size:expr) => {
-        impl<'a> FromBuffer<'a> for $SelfT {
+        impl FromBuffer for $SelfT {
             const SIZE: usize = $Size;
 
             fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {

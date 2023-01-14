@@ -296,7 +296,7 @@ impl<'a> ReadBuffer<'a> {
     }
 }
 
-pub trait FromBuffer<'a>: Sized {
+pub trait FromBuffer: Sized {
     const SIZE: usize;
 
     fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self>;
