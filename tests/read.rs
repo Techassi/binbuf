@@ -1,3 +1,5 @@
+use std::net::{Ipv4Addr, Ipv6Addr};
+
 use binbuf::prelude::*;
 
 #[test]
@@ -64,6 +66,28 @@ fn test_read_char_string() {
 
     match b.read_char_string(None) {
         Ok(n) => assert_eq!(n, &[69, 88, 65, 77, 80, 76, 69, 33]),
+        Err(err) => panic!("{}", err),
+    }
+}
+
+#[test]
+fn test_read_ipv4addr() {
+    let b = vec![127, 0, 0, 1];
+    let mut b = ReadBuffer::new(b.as_slice());
+
+    match Ipv4Addr::read::<BigEndian>(&mut b) {
+        Ok(ip) => assert_eq!(ip, Ipv4Addr::new(127, 0, 0, 1)),
+        Err(err) => panic!("{}", err),
+    }
+}
+
+#[test]
+fn test_read_ipv6addr() {
+    let b = vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+    let mut b = ReadBuffer::new(b.as_slice());
+
+    match Ipv6Addr::read::<BigEndian>(&mut b) {
+        Ok(ip) => assert_eq!(ip, Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
         Err(err) => panic!("{}", err),
     }
 }

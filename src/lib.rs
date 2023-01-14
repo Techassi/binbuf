@@ -8,6 +8,8 @@ pub mod macros;
 pub mod read;
 pub mod write;
 
+mod impls;
+
 pub enum SupportedEndianness {
     BigEndian,
     LittleEndian,

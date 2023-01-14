@@ -1,3 +1,5 @@
+use std::net::{Ipv4Addr, Ipv6Addr};
+
 use binbuf::prelude::*;
 
 #[test]
@@ -62,7 +64,7 @@ fn test_write_char_string() {
             assert_eq!(b.bytes(), &[8, 69, 88, 65, 77, 80, 76, 69, 33]);
             b.clear()
         }
-        Err(_) => todo!(),
+        Err(err) => panic!("{}", err),
     }
 
     match b.write_char_string(String::from("EXAMPLE!").as_bytes()) {
@@ -70,6 +72,34 @@ fn test_write_char_string() {
             assert_eq!(n, 9);
             assert_eq!(b.bytes(), &[8, 69, 88, 65, 77, 80, 76, 69, 33])
         }
-        Err(_) => todo!(),
+        Err(err) => panic!("{}", err),
     }
+}
+
+#[test]
+fn test_write_ipv4addr() {
+    let mut b = WriteBuffer::new();
+    let i = Ipv4Addr::new(127, 0, 0, 1);
+
+    match i.write::<BigEndian>(&mut b) {
+        Ok(n) => {
+            assert_eq!(n, 4);
+            assert_eq!(b.bytes(), &[127, 0, 0, 1])
+        }
+        Err(err) => panic!("{}", err),
+    };
+}
+
+#[test]
+fn test_write_ipv6addr() {
+    let mut b = WriteBuffer::new();
+    let i = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
+
+    match i.write::<BigEndian>(&mut b) {
+        Ok(n) => {
+            assert_eq!(n, 16);
+            assert_eq!(b.bytes(), &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+        }
+        Err(err) => panic!("{}", err),
+    };
 }
