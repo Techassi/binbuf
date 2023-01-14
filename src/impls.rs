@@ -1,6 +1,10 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::{prelude::*, read::FromBuffer, write::IntoBuffer};
+use crate::{
+    prelude::*,
+    read::FromBuffer,
+    write::{IntoBuffer, WriteableVerify},
+};
 
 impl FromBuffer for Ipv4Addr {
     const SIZE: usize = 4;
@@ -22,6 +26,10 @@ impl Readable for Ipv4Addr {
     fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         E::read(buf)
     }
+}
+
+impl ReadableVerify for Ipv4Addr {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 }
 
 impl IntoBuffer for Ipv4Addr {
@@ -47,6 +55,10 @@ impl Writeable for Ipv4Addr {
     }
 }
 
+impl WriteableVerify for Ipv4Addr {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
+}
+
 impl FromBuffer for Ipv6Addr {
     const SIZE: usize = 16;
 
@@ -67,6 +79,10 @@ impl Readable for Ipv6Addr {
     fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
         E::read(buf)
     }
+}
+
+impl ReadableVerify for Ipv6Addr {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 }
 
 impl IntoBuffer for Ipv6Addr {
@@ -90,4 +106,8 @@ impl Writeable for Ipv6Addr {
     fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
         E::write(*self, buf)
     }
+}
+
+impl WriteableVerify for Ipv6Addr {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 }
