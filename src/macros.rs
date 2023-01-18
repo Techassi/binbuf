@@ -58,5 +58,18 @@ macro_rules! into_buffer_and_writeable_impl {
     };
 }
 
+#[macro_export]
+macro_rules! bytes_written {
+    ($($Fn:expr);+) => {
+        {
+            let mut __n = 0;
+            $(
+                __n += $Fn;
+            )+
+            __n
+        }
+    };
+}
+
 pub(crate) use from_buffer_and_readable_impl;
 pub(crate) use into_buffer_and_writeable_impl;
