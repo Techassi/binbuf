@@ -22,4 +22,4 @@ utils = []
 
 [dependencies]
 binbuf-macros = { path = "binbuf-macros" }
-thiserror = "1.0.37"
+thiserror = "1.0.38"
