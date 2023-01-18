@@ -432,7 +432,9 @@ pub trait ReadableVerify: Readable {
     /// returned.
     fn supports<E: Endianness>() -> ReadBufferResult<()> {
         if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
-            return Err(BufferError::UnsupportedEndianness);
+            return Err(BufferError::UnsupportedEndianness(
+                Self::SUPPORTED_ENDIANNESS,
+            ));
         }
 
         Ok(())

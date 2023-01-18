@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{
     read::{FromBuffer, ReadBufferResult, ToReadBuffer},
     write::{IntoBuffer, ToWriteBuffer, WriteBufferResult},
@@ -10,10 +12,21 @@ pub mod write;
 
 mod impls;
 
+#[derive(Debug, PartialEq)]
 pub enum SupportedEndianness {
     BigEndian,
     LittleEndian,
     Both,
+}
+
+impl Display for SupportedEndianness {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SupportedEndianness::BigEndian => write!(f, "big endian"),
+            SupportedEndianness::LittleEndian => write!(f, "little endian"),
+            SupportedEndianness::Both => write!(f, "big+little endian"),
+        }
+    }
 }
 
 pub trait Endianness {

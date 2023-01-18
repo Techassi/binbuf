@@ -1,21 +1,33 @@
 use thiserror::Error;
 
+use crate::SupportedEndianness;
+
 #[derive(Debug, PartialEq, Error)]
 pub enum BufferError {
-    #[error("Unsupported endianness")]
-    UnsupportedEndianness,
+    /// This indicates that the type does not support reading / writing with
+    /// the requested endianness.
+    #[error("Unsupported endianness, only supports: {0}")]
+    UnsupportedEndianness(SupportedEndianness),
 
+    /// Some associated functions of `ReadBuffer` provide a way to specify a
+    /// maximum length the variable length data can have. If this max length
+    /// is exceeded this error is returned.
     #[error("Max buffer length overflow")]
     MaxLengthOverflow,
 
-    #[error("Invalid buffer jump index")]
-    InvalidJumpIndex,
-
-    // This indicates that somewhere in the buffer the reader encountered
-    // invalid / unexpected data.
+    /// This indicates that somewhere in the buffer the reader encountered
+    /// invalid / unexpected data.
     #[error("Invalid data")]
     InvalidData,
 
+    /// This indicates that the buffer is too short to read the requested
+    /// amount of bytes.
     #[error("Buffer too short")]
     BufTooShort,
+
+    /// This indicates that the caller encountered a custom error, which cannot
+    /// be mapped to a different error. This acts as a "fallback" to still
+    /// return the error message to callers.
+    #[error("Buffer error: {0}")]
+    Other(String),
 }
