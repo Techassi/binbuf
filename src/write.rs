@@ -97,7 +97,7 @@ pub trait IntoBuffer: Sized {
 }
 
 pub trait Writeable: Sized {
-    type Error: std::error::Error + From<BufferError>;
+    type Error: std::error::Error + std::fmt::Display + From<BufferError>;
 
     fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>;
 

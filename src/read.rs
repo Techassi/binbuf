@@ -317,7 +317,7 @@ pub trait FromBuffer: Sized {
 /// assert_eq!(u16::read::<BigEndian>(&mut b), Ok(17752));
 /// ```
 pub trait Readable: Sized {
-    type Error: std::error::Error + From<BufferError>;
+    type Error: std::error::Error + std::fmt::Display + From<BufferError>;
 
     /// Read [`Self`] from a [`ReadBuffer`].
     ///
