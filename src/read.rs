@@ -1,7 +1,6 @@
-use crate::{
-    error::BufferError, macros::from_buffer_and_readable_impl, BigEndian, Endianness, LittleEndian,
-    SupportedEndianness,
-};
+use binbuf_macros::from_buffer_and_readable_impl;
+
+use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEndianness};
 
 pub type ReadBufferResult<T> = Result<T, BufferError>;
 

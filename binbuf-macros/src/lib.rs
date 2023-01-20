@@ -1,73 +1,72 @@
-use proc_macro::TokenStream;
-use syn::{DeriveInput, Error};
+#[macro_export]
+macro_rules! from_buffer_and_readable_impl {
+    ($SelfT:ty, $Size:expr) => {
+        impl FromBuffer for $SelfT {
+            const SIZE: usize = $Size;
 
-mod readable;
-mod shared;
-mod writeable;
+            fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
+                let b = buf.read_slice(Self::SIZE)?;
+                Ok(Self::from_be_bytes(b.try_into().unwrap()))
+            }
 
-#[proc_macro_derive(Readable)]
-/// Annotating a struct with the derive macro [`Readable`] adds the `read_from`
-/// function which provides a convenient method to read data from a (network)
-/// byte slice and construct the target struct based on the read values.
-///
-/// ### Example
-///
-/// ```
-/// use binum::macros::Readable;
-/// use binum::BigEndian;
-///
-/// #[derive(Readable)]
-/// pub struct Target {
-///     a: u16,
-///     b: u16,
-/// }
-///
-/// let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let t = Target::read_from::<BigEndian>(&b).unwrap();
-///
-/// assert_eq!(t.a, 17752);
-/// assert_eq!(t.b, 16717);
-/// ```
-pub fn readable_macro_derive(input: TokenStream) -> TokenStream {
-    let input = syn::parse_macro_input!(input as DeriveInput);
+            fn as_le(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
+                let b = buf.read_slice(Self::SIZE)?;
+                Ok(Self::from_le_bytes(b.try_into().unwrap()))
+            }
+        }
 
-    readable::expand(input)
-        .unwrap_or_else(Error::into_compile_error)
-        .into()
+        impl Readable for $SelfT {
+            type Error = BufferError;
+            fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
+                E::read(buf)
+            }
+        }
+
+        impl ReadableVerify for $SelfT {
+            const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
+        }
+
+        impl ReadableMulti for $SelfT {}
+        impl ReadableMultiVerify for $SelfT {}
+    };
 }
 
-#[proc_macro_derive(Writeable)]
-/// Annotating a struct with the derive macro [`Writeable`] adds the `write_into`
-/// function which provides a convenient method to write struct data into a
-/// byte slice.
-///
-/// ### Example
-///
-/// ```
-/// use binum::macros::Writeable;
-/// use binum::BigEndian;
-///
-/// #[derive(Writeable)]
-/// pub struct Source {
-///     a: u16,
-///     b: u16,
-/// }
-///
-/// let mut b = vec![0; 4];
-/// let s = Source {
-///     a: 17752,
-///     b: 16717,
-/// }
-///
-/// let n = s.write_into::<BigEndian>(&mut b).unwrap();
-///
-/// assert_eq!(b, vec![69, 88, 65, 77]);
-/// assert_eq!(n, 4);
-/// ```
-pub fn writeable_macro_derive(input: TokenStream) -> TokenStream {
-    let input = syn::parse_macro_input!(input as DeriveInput);
+#[macro_export]
+macro_rules! into_buffer_and_writeable_impl {
+    ($SelfT:ty, $Size:expr) => {
+        impl IntoBuffer for $SelfT {
+            const SIZE: usize = $Size;
 
-    writeable::expand(input)
-        .unwrap_or_else(Error::into_compile_error)
-        .into()
+            fn as_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+                let b = self.to_be_bytes();
+                buf.write_slice(&b[..])
+            }
+
+            fn as_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+                let b = self.to_le_bytes();
+                buf.write_slice(&b[..])
+            }
+        }
+
+        impl Writeable for $SelfT {
+            type Error = BufferError;
+
+            fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+                E::write(*self, buf)
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! bytes_written {
+    ($($Fn:expr);+) => {
+        {
+            let mut __n = 0;
+            $(
+                __n += $Fn;
+            )+
+            __n
+        }
+    };
 }

@@ -1,7 +1,6 @@
-use crate::{
-    error::BufferError, macros::into_buffer_and_writeable_impl, BigEndian, Endianness,
-    LittleEndian, SupportedEndianness,
-};
+use binbuf_macros::into_buffer_and_writeable_impl;
+
+use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEndianness};
 
 pub type WriteBufferResult = Result<usize, BufferError>;
 

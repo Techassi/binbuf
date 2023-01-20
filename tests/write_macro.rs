@@ -1,7 +1,8 @@
-use binbuf::prelude::*;
-
+#[cfg(feature = "macros")]
 #[test]
 fn test_write_macro() {
+    use binbuf::prelude::*;
+
     let mut b = WriteBuffer::new();
 
     struct Data {
