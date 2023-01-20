@@ -1,6 +1,7 @@
 [workspace]
 members = [
   ".",
+  "binbuf-derive",
   "binbuf-macros"
 ]
 
@@ -16,10 +17,11 @@ categories = ["encoding", "parsing", "network-programming"]
 keywords = ["binary", "numbers", "network"]
 
 [features]
-full = ["macros", "utils"]
+full = ["derive", "macros"]
+derive = []
 macros = []
-utils = []
 
 [dependencies]
+binbuf-derive = { path = "binbuf-derive" }
 binbuf-macros = { path = "binbuf-macros" }
 thiserror = "1.0.38"

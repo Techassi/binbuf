@@ -47,12 +47,10 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     };
 
     Ok(quote! {
-        use binum::WriteExt;
+        impl Writeable for #struct_name {
+            type Error = BufferError;
 
-        impl #struct_name {
-            pub fn write_into<E>(&self, mut buf: &mut [u8]) -> binum::BinaryWriteResult
-            where
-                E: binum::Endianness
+            fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>
             {
                 #c
             }
@@ -65,15 +63,15 @@ fn gen_one_field(field: &Field, struct_ident: &Ident) -> Result<TokenStream> {
     let field_name = field.ident.as_ref().unwrap();
 
     // Extract the field type and also check if it is an allowed type
-    let field_type = match shared::extract_allowed_field_type(&field.ty, struct_ident) {
-        Ok(t) => t,
+    match shared::extract_allowed_field_type(&field.ty, struct_ident) {
+        Ok(_) => {}
         Err(err) => return Err(err),
     };
 
-    let func = shared::gen_write_func(field_name, &field_type);
+    let func = shared::gen_write_func(field_name);
 
     Ok(quote! {
-        #func
+        Ok(#func)
     })
 }
 
@@ -81,25 +79,17 @@ fn gen_multiple_fields(
     fields: Punctuated<Field, Comma>,
     struct_ident: &Ident,
 ) -> Result<TokenStream> {
-    let entries = match shared::extract_continuous_field_types(fields, struct_ident) {
-        Ok(e) => e,
-        Err(err) => return Err(err),
-    };
-
     // Prepare the individual parts of the code gen
     let mut funcs: Vec<TokenStream> = Vec::new();
 
-    for entry in entries {
-        if entry.count == 1 {
-            let field_type = &entry.ty;
-            let field_name = &entry.idents[0];
+    for field in fields {
+        match shared::extract_allowed_field_type(&field.ty, struct_ident) {
+            Ok(_) => {}
+            Err(err) => return Err(err),
+        };
 
-            funcs.push(shared::gen_io_write_func(field_name, field_type));
-            continue;
-        }
-
-        let field_type = &entry.ty;
-        funcs.push(shared::gen_io_multi_write_func(entry.idents, field_type));
+        let field_name = field.ident.as_ref().unwrap();
+        funcs.push(shared::gen_multi_write_func(field_name));
     }
 
     Ok(quote! {

@@ -10,7 +10,7 @@ pub use read::*;
 pub use write::*;
 
 // These are the allowed / supported types which we can read from the byte slice
-pub const ALLOWED_TYPES: [&str; 4] = ["u8", "u16", "u32", "u64"];
+pub const ALLOWED_TYPES: [&str; 7] = ["u8", "u16", "u32", "u64", "u128", "usize", "Ipv4Addr"];
 
 #[derive(Debug)]
 pub struct TyEntry {
