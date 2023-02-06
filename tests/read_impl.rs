@@ -40,7 +40,26 @@ fn test_readable_impl_derive_simple() {
 
 #[cfg(feature = "derive")]
 #[test]
-fn test_readable_impl_derive_more_fields() {
+fn test_readable_impl_derive_three_fields() {
+    #[derive(Read)]
+    struct Data {
+        v1: u16,
+        v2: u32,
+        v3: u16,
+    }
+
+    let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    let mut buf = ReadBuffer::new(b.as_slice());
+
+    let data = Data::read::<BigEndian>(&mut buf).unwrap();
+    assert_eq!(data.v1, 17752);
+    assert_eq!(data.v2, 1095585868);
+    assert_eq!(data.v3, 17697);
+}
+
+#[cfg(feature = "derive")]
+#[test]
+fn test_readable_impl_derive_ipaddr() {
     use std::net::Ipv4Addr;
 
     #[derive(Read)]
@@ -57,4 +76,20 @@ fn test_readable_impl_derive_more_fields() {
     assert_eq!(data.v1, 17752);
     assert_eq!(data.v2, 16717);
     assert_eq!(data.v3, Ipv4Addr::new(80, 76, 69, 33));
+}
+
+#[cfg(feature = "derive")]
+#[test]
+#[should_panic(expected = "called `Result::unwrap()` on an `Err` value: BufTooShort")]
+fn test_readable_impl_derive_overflow() {
+    #[derive(Read)]
+    struct Data {
+        v1: u64,
+        v2: u16,
+    }
+
+    let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    let mut buf = ReadBuffer::new(b.as_slice());
+
+    let data = Data::read::<BigEndian>(&mut buf).unwrap();
 }
