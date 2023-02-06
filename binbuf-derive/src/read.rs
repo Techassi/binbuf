@@ -48,21 +48,25 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
+    let doc_header = format!(" Read [`{}`] from a [`ReadBuffer`].", struct_name);
+    let doc_func = format!(
+        " let {} = {}::read::<BigEndian>(&mut buf).unwrap();",
+        struct_name.to_string().to_lowercase(),
+        struct_name
+    );
+
     Ok(quote! {
         impl Readable for #struct_name {
             type Error = BufferError;
-            /// Read [`Self`] from a [`ReadBuffer`].
+            #[doc = #doc_header]
             ///
             /// ### Example
             ///
             /// ```
             /// use binbuf::prelude::*;
             ///
-            /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-            /// let mut b = ReadBuffer::new(d.as_slice());
-            ///
-            /// let i = u16::read::<BigEndian>(&mut b).unwrap();
-            /// assert_eq!(i, 17752);
+            /// let mut buf = ReadBuffer::new(&data[..]);
+            #[doc = #doc_func]
             /// ```
             fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
                 #c

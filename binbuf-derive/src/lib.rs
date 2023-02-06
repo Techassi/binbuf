@@ -1,9 +1,9 @@
 use proc_macro::TokenStream;
 use syn::{DeriveInput, Error};
 
-mod readable;
+mod read;
 mod shared;
-mod writeable;
+mod write;
 
 #[proc_macro_derive(Read)]
 /// Annotating a struct with the derive macro [`Read`] adds the `read_from`
@@ -33,7 +33,7 @@ mod writeable;
 pub fn read_macro_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
-    readable::expand(input)
+    read::expand(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
@@ -68,7 +68,7 @@ pub fn read_macro_derive(input: TokenStream) -> TokenStream {
 pub fn write_macro_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
-    writeable::expand(input)
+    write::expand(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }

@@ -46,10 +46,26 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
+    let doc_header = format!(" Write [`{}`] to a [`WriteBuffer`].", struct_name);
+    let doc_func = format!(
+        " {}.write::<BigEndian>(&mut buf).unwrap();",
+        struct_name.to_string().to_lowercase(),
+    );
+
     Ok(quote! {
         impl Writeable for #struct_name {
             type Error = BufferError;
 
+            #[doc = #doc_header]
+            ///
+            /// ### Example
+            ///
+            /// ```
+            /// use binbuf::prelude::*;
+            ///
+            /// let mut buf = WriteBuffer::new();
+            #[doc = #doc_func]
+            /// ```
             fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>
             {
                 #c
@@ -71,7 +87,7 @@ fn gen_one_field(field: &Field, struct_ident: &Ident) -> Result<TokenStream> {
     let func = shared::gen_write_func(field_name);
 
     Ok(quote! {
-        Ok(#func)
+        #func
     })
 }
 
