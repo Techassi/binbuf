@@ -5,15 +5,13 @@ use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEn
 pub type WriteBufferResult = Result<usize, BufferError>;
 
 pub trait ToWriteBuffer {
-    fn new() -> Self;
     fn push(&mut self, b: u8);
     fn clear(&mut self);
 
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
 
-    fn write_slice(&mut self, s: &[u8]) -> WriteBufferResult;
-    fn write_vec(&mut self, v: &mut Vec<u8>) -> WriteBufferResult;
+    fn write<T: AsRef<[u8]>>(&mut self, b: T) -> usize;
 
     fn bytes(&self) -> &[u8];
 }
@@ -23,7 +21,99 @@ pub struct WriteBuffer {
 }
 
 impl ToWriteBuffer for WriteBuffer {
-    /// Create a new [`WriteBuffer`] backed by a `Vec<u8>`.
+    /// Adds a new byte to the end of the [`WriteBuffer`].
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new();
+    /// b.push(69);
+    ///
+    /// assert_eq!(b.len(), 1);
+    /// assert_eq!(b.bytes(), &[69]);
+    /// ```
+    fn push(&mut self, b: u8) {
+        self.buf.push(b);
+    }
+
+    /// Clears the [`WriteBuffer`], removing all bytes.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new_with([69, 88]);
+    /// b.clear();
+    ///
+    /// assert_eq!(b.len(), 0);
+    /// ```
+    fn clear(&mut self) {
+        self.buf.clear()
+    }
+
+    /// Returns the length of the [`WriteBuffer`].
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new_with([69, 88]);
+    /// assert_eq!(b.len(), 2);
+    /// ```
+    fn len(&self) -> usize {
+        self.buf.len()
+    }
+
+    /// Returns if the [`WriteBuffer`] is empty.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new();
+    /// assert_eq!(b.is_empty(), true);
+    ///
+    /// b.push(69);
+    /// assert_eq!(b.is_empty(), false);
+    /// ```
+    fn is_empty(&self) -> bool {
+        self.buf.is_empty()
+    }
+
+    /// Writes multiple bytes of data to the [`WriteBuffer`]. Possible
+    /// parameters are: `Vec<u8>`, `&[u8]`, and `[u8]`.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new();
+    /// b.write(vec![69, 88, 65]);
+    ///
+    /// assert_eq!(b.len(), 3);
+    /// assert_eq!(b.bytes(), &[69, 88, 65]);
+    /// ```
+    fn write<T: AsRef<[u8]>>(&mut self, b: T) -> usize {
+        let b = b.as_ref();
+        self.buf.extend_from_slice(b);
+
+        b.len()
+    }
+
+    /// Returns the content of [`WriteBuffer`] as a slice of bytes.
+    fn bytes(&self) -> &[u8] {
+        return self.buf.as_slice();
+    }
+}
+
+impl WriteBuffer {
+    /// Creates a new empty [`WriteBuffer`] backed by a `Vec<u8>`.
     ///
     /// ### Example
     ///
@@ -36,42 +126,48 @@ impl ToWriteBuffer for WriteBuffer {
     /// assert_eq!(b.len(), 2);
     /// assert_eq!(b.bytes(), &[69, 88]);
     /// ```
-    fn new() -> Self {
-        WriteBuffer { buf: Vec::new() }
+    pub fn new() -> Self {
+        Self { buf: Vec::new() }
     }
 
-    fn push(&mut self, b: u8) {
-        self.buf.push(b);
+    /// Creates a new [`WriteBuffer`] backed by a `Vec<u8>` with the provided
+    /// bytes already in the buffer.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new_with([69, 88]);
+    /// assert_eq!(b.bytes(), &[69, 88]);
+    /// ```
+    pub fn new_with<T: AsRef<[u8]>>(b: T) -> Self {
+        let b = b.as_ref();
+        let mut buf = Self {
+            buf: Vec::with_capacity(b.len()),
+        };
+
+        buf.write(b);
+        buf
     }
 
-    fn clear(&mut self) {
-        self.buf.clear()
-    }
-
-    fn len(&self) -> usize {
-        self.buf.len()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.buf.is_empty()
-    }
-
-    fn write_slice(&mut self, s: &[u8]) -> WriteBufferResult {
-        self.buf.extend_from_slice(s);
-        Ok(s.len())
-    }
-
-    fn write_vec(&mut self, v: &mut Vec<u8>) -> WriteBufferResult {
-        self.buf.append(v);
-        Ok(v.len())
-    }
-
-    fn bytes(&self) -> &[u8] {
-        return self.buf.as_slice();
-    }
-}
-
-impl WriteBuffer {
+    /// Writes a character string to the [`WriteBuffer`]. This will push the
+    /// length of the string as a single byte. The contents of the string
+    /// will be added after this length byte. If the length of the character
+    /// string is larger than [`u8::MAX`], the function returns the error
+    /// [`BufferError::MaxLengthOverflow`].
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let mut b = WriteBuffer::new();
+    /// b.write_char_string(&[88, 65, 77, 80]).unwrap();
+    ///
+    /// assert_eq!(b.len(), 5);
+    /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
+    /// ```
     pub fn write_char_string(&mut self, s: &[u8]) -> WriteBufferResult {
         let l = s.len();
 
@@ -80,19 +176,15 @@ impl WriteBuffer {
         }
 
         self.push(l as u8);
-
-        match self.write_slice(s) {
-            Ok(n) => Ok(n + 1),
-            Err(err) => Err(err),
-        }
+        Ok(self.write(s) + 1)
     }
 }
 
 pub trait IntoBuffer: Sized {
     const SIZE: usize;
 
-    fn as_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
-    fn as_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
+    fn as_be(&self, buf: &mut impl ToWriteBuffer) -> usize;
+    fn as_le(&self, buf: &mut impl ToWriteBuffer) -> usize;
 }
 
 pub trait Writeable: Sized {

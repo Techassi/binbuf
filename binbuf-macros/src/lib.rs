@@ -37,14 +37,14 @@ macro_rules! into_buffer_and_writeable_impl {
         impl IntoBuffer for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+            fn as_be(&self, buf: &mut impl ToWriteBuffer) -> usize {
                 let b = self.to_be_bytes();
-                buf.write_slice(&b[..])
+                buf.write(b)
             }
 
-            fn as_le(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+            fn as_le(&self, buf: &mut impl ToWriteBuffer) -> usize {
                 let b = self.to_le_bytes();
-                buf.write_slice(&b[..])
+                buf.write(b)
             }
         }
 
@@ -52,7 +52,7 @@ macro_rules! into_buffer_and_writeable_impl {
             type Error = BufferError;
 
             fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
-                E::write(*self, buf)
+                Ok(E::write(*self, buf))
             }
         }
     };

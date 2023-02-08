@@ -32,7 +32,7 @@ pub trait Endianness {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
     fn read<T: FromBuffer>(buf: &mut impl ToReadBuffer) -> ReadBufferResult<T>;
-    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult;
+    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> usize;
 }
 
 pub struct BigEndian {}
@@ -49,7 +49,7 @@ impl Endianness for BigEndian {
         T::as_be(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> usize {
         n.as_be(buf)
     }
 }
@@ -68,7 +68,7 @@ impl Endianness for LittleEndian {
         T::as_le(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> WriteBufferResult {
+    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> usize {
         n.as_le(buf)
     }
 }
