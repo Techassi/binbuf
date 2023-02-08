@@ -23,6 +23,7 @@ pub trait ToReadBuffer {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
 
+    fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&[u8]>;
     fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&[u8]>;
     fn read_vec(&mut self, nbytes: usize) -> ReadBufferResult<Vec<u8>>;
 }
@@ -233,6 +234,58 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
         self.rest.is_empty()
     }
 
+    /// Read a character string with an optional maximum length of `max_len`.
+    /// A character string is composed of one byte indicating the number of
+    /// bytes the string is made of. The string bytes then follow.
+    ///
+    /// The parameter `max_len` helps to check if the length of the character
+    /// string does not exceed any limitations defined by a protocol for
+    /// example. This function peeks the next byte to use as the length. If
+    /// the length exceeds the provided `max_len` the error
+    /// [`BufferError::MaxLengthOverflow`] is returned.
+    ///
+    /// If the peek returns [`None`] indicating we reached the end of the
+    /// buffer the error [`BufferError::BufTooShort`] is returned.
+    ///
+    /// ### Example
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![4, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// assert_eq!(b.read_char_string(None), Ok([88, 65, 77, 80].as_slice()));
+    /// assert_eq!(b.len(), 3);
+    /// ```
+    ///
+    /// ### Example with a maximum length
+    ///
+    /// ```
+    /// use binbuf::prelude::*;
+    ///
+    /// let d = vec![4, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = ReadBuffer::new(d.as_slice());
+    ///
+    /// assert_eq!(b.read_char_string(Some(3)), Err(BufferError::MaxLengthOverflow));
+    /// assert_eq!(b.len(), 8);
+    /// ```
+    fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&[u8]> {
+        let len = match self.peek() {
+            Some(len) => len as usize,
+            None => return Err(BufferError::BufTooShort),
+        };
+
+        if let Some(max_len) = max_len {
+            if len > max_len {
+                return Err(BufferError::MaxLengthOverflow);
+            }
+        }
+
+        self.skip()?;
+        self.read_slice(len)
+    }
+
     /// Read a slice of bytes with the length `nbytes` from the buffer. If the
     /// number of requested bytes overflow the buffer length, an error is
     /// returned.
@@ -295,58 +348,6 @@ impl<'a> ReadBuffer<'a> {
             rest: buf,
             jump_indices: Vec::new(),
         }
-    }
-
-    /// Read a character string with an optional maximum length of `max_len`.
-    /// A character string is composed of one byte indicating the number of
-    /// bytes the string is made of. The string bytes then follow.
-    ///
-    /// The parameter `max_len` helps to check if the length of the character
-    /// string does not exceed any limitations defined by a protocol for
-    /// example. This function peeks the next byte to use as the length. If
-    /// the length exceeds the provided `max_len` the error
-    /// [`BufferError::MaxLengthOverflow`] is returned.
-    ///
-    /// If the peek returns [`None`] indicating we reached the end of the
-    /// buffer the error [`BufferError::BufTooShort`] is returned.
-    ///
-    /// ### Example
-    ///
-    /// ```
-    /// use binbuf::prelude::*;
-    ///
-    /// let d = vec![4, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
-    ///
-    /// assert_eq!(b.read_char_string(None), Ok([88, 65, 77, 80].as_slice()));
-    /// assert_eq!(b.len(), 3);
-    /// ```
-    ///
-    /// ### Example with a maximum length
-    ///
-    /// ```
-    /// use binbuf::prelude::*;
-    ///
-    /// let d = vec![4, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
-    ///
-    /// assert_eq!(b.read_char_string(Some(3)), Err(BufferError::MaxLengthOverflow));
-    /// assert_eq!(b.len(), 8);
-    /// ```
-    pub fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&[u8]> {
-        let len = match self.peek() {
-            Some(len) => len as usize,
-            None => return Err(BufferError::BufTooShort),
-        };
-
-        if let Some(max_len) = max_len {
-            if len > max_len {
-                return Err(BufferError::MaxLengthOverflow);
-            }
-        }
-
-        self.skip()?;
-        self.read_slice(len)
     }
 }
 
