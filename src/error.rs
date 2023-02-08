@@ -9,6 +9,9 @@ pub enum BufferError {
     #[error("Unsupported endianness, only supports: {0}")]
     UnsupportedEndianness(SupportedEndianness),
 
+    #[error("Invalid jump index. Jumping beyond the current offset is not permitted")]
+    InvalidJumpIndex,
+
     /// Some associated functions of `ReadBuffer` provide a way to specify a
     /// maximum length the variable length data can have. If this max length
     /// is exceeded this error is returned.

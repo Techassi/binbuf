@@ -14,6 +14,11 @@ pub trait ToReadBuffer {
     fn peek(&self) -> Option<u8>;
     fn peekn<const N: usize>(&self) -> Option<[u8; N]>;
 
+    fn jump_to(&mut self, index: usize) -> ReadBufferResult<()>;
+    fn jump_reset(&mut self) -> bool;
+    fn jumped(&self) -> bool;
+    fn jump_back(&mut self);
+
     fn offset(&self) -> usize;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
@@ -22,7 +27,9 @@ pub trait ToReadBuffer {
     fn read_vec(&mut self, nbytes: usize) -> ReadBufferResult<Vec<u8>>;
 }
 
+#[derive(Debug)]
 pub struct ReadBuffer<'a> {
+    jump_indices: Vec<usize>,
     buf: &'a [u8],
     rest: &'a [u8],
 }
@@ -126,6 +133,50 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
                 Err(_) => None,
             },
             None => None,
+        }
+    }
+
+    /// Jumps back to offset `index`. Jumping beyond the current offset is not
+    /// permitted and returns [`BufferError::InvalidJumpIndex`]. If the index
+    /// is greater than the buffers length, [`BufferError::BufTooShort`] is
+    /// returned.
+    fn jump_to(&mut self, index: usize) -> ReadBufferResult<()> {
+        if index > self.len() {
+            return Err(BufferError::BufTooShort);
+        }
+
+        if index > self.offset() {
+            return Err(BufferError::InvalidJumpIndex);
+        }
+
+        self.jump_indices.push(self.offset());
+        self.rest = &self.buf[index..];
+
+        Ok(())
+    }
+
+    /// Resets the jump indices and returns true if there were any indices.
+    fn jump_reset(&mut self) -> bool {
+        if !self.jumped() {
+            return false;
+        }
+
+        let index = self.jump_indices.first().unwrap().clone();
+        self.jump_indices.clear();
+
+        self.rest = &self.buf[index..];
+        true
+    }
+
+    /// Returns if there are any jump indices stores.
+    fn jumped(&self) -> bool {
+        !self.jump_indices.is_empty()
+    }
+
+    /// Jumps back one index and removes the index from the stored jump indices.
+    fn jump_back(&mut self) {
+        if let Some(index) = self.jump_indices.pop() {
+            self.rest = &self.buf[index..];
         }
     }
 
@@ -239,7 +290,11 @@ impl<'a> ReadBuffer<'a> {
     /// assert_eq!(b.len(), 8);
     /// ```
     pub fn new(buf: &'a [u8]) -> Self {
-        ReadBuffer { buf, rest: buf }
+        ReadBuffer {
+            buf,
+            rest: buf,
+            jump_indices: Vec::new(),
+        }
     }
 
     /// Read a character string with an optional maximum length of `max_len`.
