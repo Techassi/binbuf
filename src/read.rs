@@ -23,7 +23,7 @@ pub trait ToReadBuffer {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
 
-    fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&[u8]>;
+    fn read_char_string(&mut self, max_len: Option<u8>) -> ReadBufferResult<&[u8]>;
     fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&[u8]>;
     fn read_vec(&mut self, nbytes: usize) -> ReadBufferResult<Vec<u8>>;
 }
@@ -270,14 +270,14 @@ impl<'a> ToReadBuffer for ReadBuffer<'a> {
     /// assert_eq!(b.read_char_string(Some(3)), Err(BufferError::MaxLengthOverflow));
     /// assert_eq!(b.len(), 8);
     /// ```
-    fn read_char_string(&mut self, max_len: Option<usize>) -> ReadBufferResult<&[u8]> {
+    fn read_char_string(&mut self, max_len: Option<u8>) -> ReadBufferResult<&[u8]> {
         let len = match self.peek() {
             Some(len) => len as usize,
             None => return Err(BufferError::BufTooShort),
         };
 
         if let Some(max_len) = max_len {
-            if len > max_len {
+            if len > max_len.into() {
                 return Err(BufferError::MaxLengthOverflow);
             }
         }
