@@ -31,6 +31,6 @@ pub enum BufferError {
     /// This indicates that the caller encountered a custom error, which cannot
     /// be mapped to a different error. This acts as a "fallback" to still
     /// return the error message to callers.
-    #[error("Buffer error: {0}")]
+    #[error("Other error: {0}")]
     Other(String),
 }
