@@ -1,4 +1,4 @@
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{punctuated::Punctuated, token::Comma, DeriveInput, Error, Field, Result};
 
@@ -18,7 +18,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    // Extract all named fields. THis will return an error if there are unnamed
+    // Extract all named fields. This will return an error if there are unnamed
     // fields present
     let named_fields = match shared::extract_named_fields(struct_data) {
         Some(f) => f.named,
@@ -35,12 +35,12 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     }
 
     let c: TokenStream = if named_fields.len() == 1 {
-        match gen_one_field(named_fields.first().unwrap(), struct_name) {
+        match gen_one_field(named_fields.first().unwrap()) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
         }
     } else {
-        match gen_multiple_fields(named_fields, struct_name) {
+        match gen_multiple_fields(named_fields) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
         }
@@ -74,16 +74,9 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     })
 }
 
-fn gen_one_field(field: &Field, struct_ident: &Ident) -> Result<TokenStream> {
+fn gen_one_field(field: &Field) -> Result<TokenStream> {
     // Extract the field name
     let field_name = field.ident.as_ref().unwrap();
-
-    // Extract the field type and also check if it is an allowed type
-    match shared::extract_allowed_field_type(&field.ty, struct_ident) {
-        Ok(_) => {}
-        Err(err) => return Err(err),
-    };
-
     let func = shared::gen_write_func(field_name);
 
     Ok(quote! {
@@ -91,19 +84,11 @@ fn gen_one_field(field: &Field, struct_ident: &Ident) -> Result<TokenStream> {
     })
 }
 
-fn gen_multiple_fields(
-    fields: Punctuated<Field, Comma>,
-    struct_ident: &Ident,
-) -> Result<TokenStream> {
+fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> Result<TokenStream> {
     // Prepare the individual parts of the code gen
     let mut funcs: Vec<TokenStream> = Vec::new();
 
     for field in fields {
-        match shared::extract_allowed_field_type(&field.ty, struct_ident) {
-            Ok(_) => {}
-            Err(err) => return Err(err),
-        };
-
         let field_name = field.ident.as_ref().unwrap();
         funcs.push(shared::gen_multi_write_func(field_name));
     }

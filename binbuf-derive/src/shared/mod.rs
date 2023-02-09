@@ -9,9 +9,6 @@ mod write;
 pub use read::*;
 pub use write::*;
 
-// These are the allowed / supported types which we can read from the byte slice
-pub const ALLOWED_TYPES: [&str; 7] = ["u8", "u16", "u32", "u64", "u128", "usize", "Ipv4Addr"];
-
 #[derive(Debug)]
 pub struct TyEntry {
     pub idents: Vec<Ident>,
@@ -50,31 +47,6 @@ pub fn extract_last_path_segment_ident(ty: &Type) -> Option<Ident> {
     }
 }
 
-pub fn extract_allowed_field_type(ty: &Type, struct_ident: &Ident) -> Result<Ident, Error> {
-    let field_type = match extract_last_path_segment_ident(ty) {
-        Some(li) => li,
-        None => {
-            return Err(Error::new(
-                Span::call_site(),
-                "Failed to extract ident from field type",
-            ))
-        }
-    };
-
-    // There has to be a better way to do this, right?
-    if !ALLOWED_TYPES.contains(&field_type.to_string().as_str()) {
-        return Err(Error::new(
-            Span::call_site(),
-            format!(
-                "Invalid type found in struct '{}'. Only {:?} allowed",
-                struct_ident, ALLOWED_TYPES
-            ),
-        ));
-    }
-
-    Ok(field_type)
-}
-
 pub fn extract_continuous_field_types(
     fields: Punctuated<Field, Comma>,
     struct_ident: &Ident,
@@ -82,9 +54,14 @@ pub fn extract_continuous_field_types(
     let mut entries: Vec<TyEntry> = Vec::new();
 
     for field in fields {
-        let field_type = match extract_allowed_field_type(&field.ty, struct_ident) {
-            Ok(t) => t,
-            Err(err) => return Err(err),
+        let field_type = match extract_last_path_segment_ident(&field.ty) {
+            Some(t) => t,
+            None => {
+                return Err(Error::new(
+                    Span::call_site(),
+                    "Failed to extract ident from field type",
+                ))
+            }
         };
 
         if entries.is_empty() {

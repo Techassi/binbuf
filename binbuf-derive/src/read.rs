@@ -37,7 +37,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     }
 
     let c: TokenStream = if named_fields.len() == 1 {
-        match gen_one_field(named_fields.first().unwrap(), struct_name) {
+        match gen_one_field(named_fields.first().unwrap()) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
         }
@@ -76,14 +76,19 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
 }
 
 /// This generates code when there is only one named field in the struct.
-fn gen_one_field(field: &Field, struct_ident: &Ident) -> Result<TokenStream> {
+fn gen_one_field(field: &Field) -> Result<TokenStream> {
     // Extract the field name
     let field_name = field.ident.as_ref().unwrap();
 
-    // Extract the field type and also check if it is an allowed type
-    let field_type = match shared::extract_allowed_field_type(&field.ty, struct_ident) {
-        Ok(t) => t,
-        Err(err) => return Err(err),
+    // Extract the field type
+    let field_type = match shared::extract_last_path_segment_ident(&field.ty) {
+        Some(t) => t,
+        None => {
+            return Err(Error::new(
+                Span::call_site(),
+                "Failed to extract ident from field type",
+            ))
+        }
     };
 
     // Construct the variable name
@@ -104,50 +109,31 @@ fn gen_multiple_fields(
     fields: Punctuated<Field, Comma>,
     struct_ident: &Ident,
 ) -> Result<TokenStream> {
-    let entries = match shared::extract_continuous_field_types(fields, struct_ident) {
-        Ok(e) => e,
-        Err(err) => return Err(err),
-    };
-
-    // Prepare the individual parts of the code gen
+    // Here we need esnure the ReadableMulti trait is implemented, how can we achieve that?
+    // For now, we just generate a read call for each of the fields
     let mut funcs: Vec<TokenStream> = Vec::new();
     let mut inner: Vec<TokenStream> = Vec::new();
 
-    for entry in entries {
-        if entry.count == 1 {
-            let field_type = &entry.ty;
-            let field_name = &entry.idents[0];
+    for field in fields {
+        let field_name = field.ident.as_ref().unwrap();
+        let var_name = format_ident!("_gen_{}", field_name);
 
-            let var_name = format_ident!("_gen_{}", field_name);
+        let field_type = match shared::extract_last_path_segment_ident(&field.ty) {
+            Some(t) => t,
+            None => {
+                return Err(Error::new(
+                    Span::call_site(),
+                    "Failed to extract ident from field type",
+                ))
+            }
+        };
 
-            funcs.push(shared::gen_read_func(&var_name, field_type));
-            inner.push(quote! {
-                #field_name: #var_name,
-            });
-            continue;
-        }
+        let func = shared::gen_read_func(&var_name, &field_type);
 
-        let mut fields = String::new();
-        let field_type = &entry.ty;
-
-        for ident in &entry.idents {
-            fields.push_str(&ident.to_string())
-        }
-
-        let var_name = format_ident!("_gen_multi_{}", fields);
-        funcs.push(shared::gen_multi_read_func(
-            &var_name,
-            field_type,
-            entry.count,
-        ));
-
-        for i in 0..entry.count {
-            let field_name = &entry.idents[i];
-
-            inner.push(quote! {
-                #field_name: #var_name[#i],
-            })
-        }
+        funcs.push(func);
+        inner.push(quote! {
+            #field_name: #var_name,
+        })
     }
 
     Ok(quote! {
@@ -157,4 +143,58 @@ fn gen_multiple_fields(
             #(#inner)*
         })
     })
+
+    // let entries = match shared::extract_continuous_field_types(fields, struct_ident) {
+    //     Ok(e) => e,
+    //     Err(err) => return Err(err),
+    // };
+
+    // // Prepare the individual parts of the code gen
+    // let mut funcs: Vec<TokenStream> = Vec::new();
+    // let mut inner: Vec<TokenStream> = Vec::new();
+
+    // for entry in entries {
+    //     if entry.count == 1 {
+    //         let field_type = &entry.ty;
+    //         let field_name = &entry.idents[0];
+
+    //         let var_name = format_ident!("_gen_{}", field_name);
+
+    //         funcs.push(shared::gen_read_func(&var_name, field_type));
+    //         inner.push(quote! {
+    //             #field_name: #var_name,
+    //         });
+    //         continue;
+    //     }
+
+    //     let mut fields = String::new();
+    //     let field_type = &entry.ty;
+
+    //     for ident in &entry.idents {
+    //         fields.push_str(&ident.to_string())
+    //     }
+
+    //     let var_name = format_ident!("_gen_multi_{}", fields);
+    //     funcs.push(shared::gen_multi_read_func(
+    //         &var_name,
+    //         field_type,
+    //         entry.count,
+    //     ));
+
+    //     for i in 0..entry.count {
+    //         let field_name = &entry.idents[i];
+
+    //         inner.push(quote! {
+    //             #field_name: #var_name[#i],
+    //         })
+    //     }
+    // }
+
+    // Ok(quote! {
+    //     #(#funcs)*
+
+    //     return Ok(Self {
+    //         #(#inner)*
+    //     })
+    // })
 }
