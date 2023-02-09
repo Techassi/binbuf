@@ -73,3 +73,34 @@ fn text_writeable_impl_derive_more_fields() {
         Err(err) => panic!("{}", err),
     };
 }
+
+#[cfg(feature = "derive")]
+#[test]
+fn test_writeable_impl_derive_nested() {
+    #[derive(Write)]
+    struct Data {
+        nested: Nested,
+    }
+
+    #[derive(Write)]
+    struct Nested {
+        v1: u16,
+        v2: u16,
+    }
+
+    let d = Data {
+        nested: Nested {
+            v1: 17752,
+            v2: 16717,
+        },
+    };
+
+    let mut b = WriteBuffer::new();
+    match d.write::<BigEndian>(&mut b) {
+        Ok(n) => {
+            assert_eq!(n, 4);
+            assert_eq!(b.bytes(), &[69, 88, 65, 77]);
+        }
+        Err(err) => panic!("{}", err),
+    }
+}

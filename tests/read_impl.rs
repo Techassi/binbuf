@@ -93,3 +93,26 @@ fn test_readable_impl_derive_overflow() {
 
     let data = Data::read::<BigEndian>(&mut buf).unwrap();
 }
+
+#[cfg(feature = "derive")]
+#[test]
+fn test_readable_impl_derive_nested() {
+    #[derive(Read)]
+    struct Data {
+        nested: Nested,
+    }
+
+    #[derive(Read)]
+    struct Nested {
+        v1: u16,
+        v2: u16,
+    }
+
+    let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
+    let mut buf = ReadBuffer::new(b.as_slice());
+
+    let data = Data::read::<BigEndian>(&mut buf).unwrap();
+
+    assert_eq!(data.nested.v1, 17752);
+    assert_eq!(data.nested.v2, 16717);
+}
