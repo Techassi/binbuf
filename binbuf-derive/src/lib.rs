@@ -5,7 +5,7 @@ mod read;
 mod shared;
 mod write;
 
-#[proc_macro_derive(Read)]
+#[proc_macro_derive(Read, attributes(binbuf))]
 /// Annotating a struct with the derive macro [`Read`] adds the `read_from`
 /// function which provides a convenient method to read data from a (network)
 /// byte slice and construct the target struct based on the read values. This

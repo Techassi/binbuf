@@ -1,8 +1,27 @@
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
-use syn::{punctuated::Punctuated, token::Comma, DeriveInput, Error, Field, Result};
+use structmeta::StructMeta;
+use syn::{
+    punctuated::Punctuated, token::Comma, Attribute, DeriveInput, Error, ExprPath, Field, LitStr,
+    Result,
+};
 
 use crate::shared;
+
+#[derive(StructMeta)]
+struct ReadStructAttrs {
+    error: LitStr,
+    endianness: LitStr,
+}
+
+impl Default for ReadStructAttrs {
+    fn default() -> Self {
+        Self {
+            error: LitStr::new("binbuf::error::BufferError", Span::call_site()),
+            endianness: LitStr::new("both", Span::call_site()),
+        }
+    }
+}
 
 /// Expand the `Readable` derive macro by returning the generated
 /// [`TokenStream`].
@@ -36,42 +55,32 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         return Ok(quote! {});
     }
 
-    let c: TokenStream = if named_fields.len() == 1 {
+    // Parse struct attributes
+    let struct_attrs = parse_struct_attributes(input.attrs)?;
+
+    let read_inner: TokenStream = if named_fields.len() == 1 {
         match gen_one_field(named_fields.first().unwrap()) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
         }
     } else {
-        match gen_multiple_fields(named_fields, struct_name) {
+        match gen_multiple_fields(named_fields) {
             Ok(ts) => ts,
             Err(err) => return Err(err),
         }
     };
 
-    let doc_header = format!(" Read [`{struct_name}`] from a [`ReadBuffer`].");
-    let doc_func = format!(
-        " let {} = {}::read::<BigEndian>(&mut buf).unwrap();",
-        struct_name.to_string().to_lowercase(),
-        struct_name
-    );
+    // Validate the struct args
+    let readable_error: ExprPath = struct_attrs.error.parse()?;
+
+    // Generate trait impls
+    let readable_impl = shared::gen_readable_impl(struct_name, read_inner, readable_error);
+    let readable_verify_impl =
+        shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness)?;
 
     Ok(quote! {
-        impl Readable for #struct_name {
-            type Error = BufferError;
-            #[doc = #doc_header]
-            ///
-            /// ### Example
-            ///
-            /// ```
-            /// use binbuf::prelude::*;
-            ///
-            /// let mut buf = ReadBuffer::new(&data[..]);
-            #[doc = #doc_func]
-            /// ```
-            fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
-                #c
-            }
-        }
+        #readable_impl
+        #readable_verify_impl
     })
 }
 
@@ -105,10 +114,7 @@ fn gen_one_field(field: &Field) -> Result<TokenStream> {
 }
 
 /// This generates code when there are multiple named fields in the struct.
-fn gen_multiple_fields(
-    fields: Punctuated<Field, Comma>,
-    struct_ident: &Ident,
-) -> Result<TokenStream> {
+fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> Result<TokenStream> {
     // Here we need esnure the ReadableMulti trait is implemented, how can we achieve that?
     // For now, we just generate a read call for each of the fields
     let mut funcs: Vec<TokenStream> = Vec::new();
@@ -197,4 +203,26 @@ fn gen_multiple_fields(
     //         #(#inner)*
     //     })
     // })
+}
+
+fn parse_struct_attributes(attrs: Vec<Attribute>) -> Result<ReadStructAttrs> {
+    let mut struct_attrs = ReadStructAttrs::default();
+
+    for attr in attrs {
+        if !attr.path.is_ident("binbuf") {
+            continue;
+        }
+
+        let attr = attr.parse_args::<ReadStructAttrs>().unwrap();
+
+        if !attr.error.value().is_empty() {
+            struct_attrs.error = attr.error
+        }
+
+        if !attr.endianness.value().is_empty() {
+            struct_attrs.endianness = attr.endianness
+        }
+    }
+
+    Ok(struct_attrs)
 }
