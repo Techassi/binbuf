@@ -9,7 +9,7 @@ fn test_readable_impl() {
     impl Readable for Data {
         type Error = BufferError;
 
-        fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
+        fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
             let inner = u16::read::<E>(buf)?;
 
             Ok(Self { inner })

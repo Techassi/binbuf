@@ -9,7 +9,7 @@ fn test_writeable_impl() {
     impl Writeable for Data {
         type Error = BufferError;
 
-        fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
+        fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
             self.inner.write::<E>(buf)
         }
     }

@@ -13,7 +13,7 @@ fn test_write_macro() {
     impl Writeable for Data {
         type Error = BufferError;
 
-        fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
+        fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
             let n = bytes_written! {
                 self.v1.write::<E>(buf)?;
                 self.v2.write::<E>(buf)?

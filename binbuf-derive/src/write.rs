@@ -66,7 +66,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
             /// let mut buf = WriteBuffer::new();
             #[doc = #doc_func]
             /// ```
-            fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error>
+            fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error>
             {
                 #c
             }

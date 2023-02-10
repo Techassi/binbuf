@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
 use crate::{
-    read::{FromBuffer, ReadBufferResult, ToReadBuffer},
-    write::{IntoBuffer, ToWriteBuffer, WriteBufferResult},
+    read::{FromBuffer, ReadBuffer, ReadBufferResult},
+    write::{IntoBuffer, WriteBuffer},
 };
 
 pub mod error;
@@ -31,8 +31,8 @@ impl Display for SupportedEndianness {
 pub trait Endianness {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
-    fn read<T: FromBuffer>(buf: &mut impl ToReadBuffer) -> ReadBufferResult<T>;
-    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> usize;
+    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T>;
+    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize;
 }
 
 pub struct BigEndian {}
@@ -45,11 +45,11 @@ impl Endianness for BigEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut impl ToReadBuffer) -> ReadBufferResult<T> {
+    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T> {
         T::as_be(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> usize {
+    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize {
         n.as_be(buf)
     }
 }
@@ -64,11 +64,11 @@ impl Endianness for LittleEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut impl ToReadBuffer) -> ReadBufferResult<T> {
+    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T> {
         T::as_le(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut impl ToWriteBuffer) -> usize {
+    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize {
         n.as_le(buf)
     }
 }
@@ -78,9 +78,9 @@ pub mod prelude {
         error::BufferError,
         read::{
             ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ReadableMultiVerify,
-            ReadableVerify, ToReadBuffer,
+            ReadableVerify,
         },
-        write::{ToWriteBuffer, WriteBuffer, WriteBufferResult, Writeable},
+        write::{WriteBuffer, WriteBufferResult, Writeable},
         BigEndian, Endianness, LittleEndian, SupportedEndianness,
     };
 

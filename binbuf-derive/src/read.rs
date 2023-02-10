@@ -68,7 +68,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
             /// let mut buf = ReadBuffer::new(&data[..]);
             #[doc = #doc_func]
             /// ```
-            fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
+            fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
                 #c
             }
         }

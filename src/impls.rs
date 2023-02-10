@@ -9,12 +9,12 @@ use crate::{
 impl FromBuffer for Ipv4Addr {
     const SIZE: usize = 4;
 
-    fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
+    fn as_be(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
         let b = u32::read_be(buf)?;
         Ok(Self::from(b))
     }
 
-    fn as_le(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
+    fn as_le(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
         let b = u32::read_le(buf)?;
         Ok(Self::from(b))
     }
@@ -23,7 +23,7 @@ impl FromBuffer for Ipv4Addr {
 impl Readable for Ipv4Addr {
     type Error = BufferError;
 
-    fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
+    fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
         E::read(buf)
     }
 }
@@ -35,12 +35,12 @@ impl ReadableVerify for Ipv4Addr {
 impl IntoBuffer for Ipv4Addr {
     const SIZE: usize = 4;
 
-    fn as_be(&self, buf: &mut impl ToWriteBuffer) -> usize {
+    fn as_be(&self, buf: &mut WriteBuffer) -> usize {
         let b = self.octets();
         buf.write(b)
     }
 
-    fn as_le(&self, buf: &mut impl ToWriteBuffer) -> usize {
+    fn as_le(&self, buf: &mut WriteBuffer) -> usize {
         let mut b = self.octets();
         b.reverse();
         buf.write(b)
@@ -50,7 +50,7 @@ impl IntoBuffer for Ipv4Addr {
 impl Writeable for Ipv4Addr {
     type Error = BufferError;
 
-    fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         Ok(E::write(*self, buf))
     }
 }
@@ -62,12 +62,12 @@ impl WriteableVerify for Ipv4Addr {
 impl FromBuffer for Ipv6Addr {
     const SIZE: usize = 16;
 
-    fn as_be(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
+    fn as_be(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
         let b = u128::read_be(buf)?;
         Ok(Self::from(b))
     }
 
-    fn as_le(buf: &mut impl ToReadBuffer) -> ReadBufferResult<Self> {
+    fn as_le(buf: &mut ReadBuffer) -> ReadBufferResult<Self> {
         let b = u128::read_le(buf)?;
         Ok(Self::from(b))
     }
@@ -76,7 +76,7 @@ impl FromBuffer for Ipv6Addr {
 impl Readable for Ipv6Addr {
     type Error = BufferError;
 
-    fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
+    fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
         E::read(buf)
     }
 }
@@ -88,12 +88,12 @@ impl ReadableVerify for Ipv6Addr {
 impl IntoBuffer for Ipv6Addr {
     const SIZE: usize = 16;
 
-    fn as_be(&self, buf: &mut impl ToWriteBuffer) -> usize {
+    fn as_be(&self, buf: &mut WriteBuffer) -> usize {
         let b = self.octets();
         buf.write(b)
     }
 
-    fn as_le(&self, buf: &mut impl ToWriteBuffer) -> usize {
+    fn as_le(&self, buf: &mut WriteBuffer) -> usize {
         let mut b = self.octets();
         b.reverse();
         buf.write(b)
@@ -103,7 +103,7 @@ impl IntoBuffer for Ipv6Addr {
 impl Writeable for Ipv6Addr {
     type Error = BufferError;
 
-    fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         Ok(E::write(*self, buf))
     }
 }
