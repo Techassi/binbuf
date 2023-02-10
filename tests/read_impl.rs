@@ -80,6 +80,7 @@ fn test_readable_impl_derive_ipaddr() {
 
 #[cfg(feature = "derive")]
 #[test]
+#[allow(dead_code, unused_variables)]
 #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: BufTooShort")]
 fn test_readable_impl_derive_overflow() {
     #[derive(Read)]
