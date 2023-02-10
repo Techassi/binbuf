@@ -58,7 +58,7 @@ fn test_write_u64() {
 fn test_write_char_string() {
     let mut b = WriteBuffer::new();
 
-    match b.write_char_string(vec![69, 88, 65, 77, 80, 76, 69, 33].as_slice()) {
+    match b.write_char_string(vec![69, 88, 65, 77, 80, 76, 69, 33].as_slice(), None) {
         Ok(n) => {
             assert_eq!(n, 9);
             assert_eq!(b.bytes(), &[8, 69, 88, 65, 77, 80, 76, 69, 33]);
@@ -67,7 +67,7 @@ fn test_write_char_string() {
         Err(err) => panic!("{}", err),
     }
 
-    match b.write_char_string(String::from("EXAMPLE!").as_bytes()) {
+    match b.write_char_string(String::from("EXAMPLE!").as_bytes(), None) {
         Ok(n) => {
             assert_eq!(n, 9);
             assert_eq!(b.bytes(), &[8, 69, 88, 65, 77, 80, 76, 69, 33])

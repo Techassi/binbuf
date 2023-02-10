@@ -145,19 +145,25 @@ impl WriteBuffer {
     /// use binbuf::prelude::*;
     ///
     /// let mut b = WriteBuffer::new();
-    /// b.write_char_string(&[88, 65, 77, 80]).unwrap();
+    /// b.write_char_string(&[88, 65, 77, 80], None).unwrap();
     ///
     /// assert_eq!(b.len(), 5);
     /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
     /// ```
-    pub fn write_char_string(&mut self, s: &[u8]) -> WriteBufferResult {
-        let l = s.len();
+    pub fn write_char_string(&mut self, s: &[u8], max_len: Option<u8>) -> WriteBufferResult {
+        let len = s.len();
 
-        if l > u8::MAX as usize {
+        if len > u8::MAX as usize {
             return Err(BufferError::MaxLengthOverflow);
         }
 
-        self.push(l as u8);
+        if let Some(max_len) = max_len {
+            if len > max_len.into() {
+                return Err(BufferError::MaxLengthOverflow);
+            }
+        }
+
+        self.push(len as u8);
         Ok(self.write(s) + 1)
     }
 
