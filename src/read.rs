@@ -130,14 +130,8 @@ impl<'a> ReadBuffer<'a> {
     }
 
     /// Jumps back to offset `index`. Jumping beyond the current offset is not
-    /// permitted and returns [`BufferError::InvalidJumpIndex`]. If the index
-    /// is greater than the buffers length, [`BufferError::BufTooShort`] is
-    /// returned.
+    /// permitted and returns [`BufferError::InvalidJumpIndex`].
     pub fn jump_to(&mut self, index: usize) -> ReadBufferResult<()> {
-        if index > self.len() {
-            return Err(BufferError::BufTooShort);
-        }
-
         if index > self.offset() {
             return Err(BufferError::InvalidJumpIndex);
         }
