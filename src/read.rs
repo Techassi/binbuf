@@ -59,10 +59,7 @@ impl<'a> ReadBuffer<'a> {
     /// popped off byte. This is rarely useful other than in combination with
     /// `peek()`.
     pub fn skip(&mut self) -> ReadBufferResult<()> {
-        if let Err(err) = self.pop() {
-            return Err(err);
-        }
-
+        self.pop()?;
         Ok(())
     }
 
@@ -157,7 +154,7 @@ impl<'a> ReadBuffer<'a> {
             return false;
         }
 
-        let index = self.jump_indices.first().unwrap().clone();
+        let index = *self.jump_indices.first().unwrap();
         self.jump_indices.clear();
 
         self.rest = &self.buf[index..];

@@ -4,6 +4,7 @@ use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEn
 
 pub type WriteBufferResult = Result<usize, BufferError>;
 
+#[derive(Debug, Default)]
 pub struct WriteBuffer {
     buf: Vec<u8>,
 }
@@ -23,7 +24,7 @@ impl WriteBuffer {
     /// assert_eq!(b.bytes(), &[69, 88]);
     /// ```
     pub fn new() -> Self {
-        Self { buf: Vec::new() }
+        Self::default()
     }
 
     /// Creates a new [`WriteBuffer`] backed by a `Vec<u8>` with the provided

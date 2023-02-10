@@ -48,7 +48,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    let doc_header = format!(" Read [`{}`] from a [`ReadBuffer`].", struct_name);
+    let doc_header = format!(" Read [`{struct_name}`] from a [`ReadBuffer`].");
     let doc_func = format!(
         " let {} = {}::read::<BigEndian>(&mut buf).unwrap();",
         struct_name.to_string().to_lowercase(),

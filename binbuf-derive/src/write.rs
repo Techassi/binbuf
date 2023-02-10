@@ -46,7 +46,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    let doc_header = format!(" Write [`{}`] to a [`WriteBuffer`].", struct_name);
+    let doc_header = format!(" Write [`{struct_name}`] to a [`WriteBuffer`].");
     let doc_func = format!(
         " {}.write::<BigEndian>(&mut buf).unwrap();",
         struct_name.to_string().to_lowercase(),
