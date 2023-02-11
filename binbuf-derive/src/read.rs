@@ -10,15 +10,15 @@ use crate::shared;
 
 #[derive(StructMeta)]
 struct ReadStructAttrs {
-    error: LitStr,
-    endianness: LitStr,
+    error: Option<LitStr>,
+    endianness: Option<LitStr>,
 }
 
 impl Default for ReadStructAttrs {
     fn default() -> Self {
         Self {
-            error: LitStr::new("binbuf::error::BufferError", Span::call_site()),
-            endianness: LitStr::new("both", Span::call_site()),
+            error: Some(LitStr::new("binbuf::error::BufferError", Span::call_site())),
+            endianness: Some(LitStr::new("both", Span::call_site())),
         }
     }
 }
@@ -71,12 +71,12 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     };
 
     // Validate the struct args
-    let readable_error: ExprPath = struct_attrs.error.parse()?;
+    let readable_error: ExprPath = struct_attrs.error.unwrap().parse()?;
 
     // Generate trait impls
     let readable_impl = shared::gen_readable_impl(struct_name, read_inner, readable_error);
     let readable_verify_impl =
-        shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness)?;
+        shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness.unwrap())?;
 
     Ok(quote! {
         #readable_impl
@@ -215,12 +215,12 @@ fn parse_struct_attributes(attrs: Vec<Attribute>) -> Result<ReadStructAttrs> {
 
         let attr = attr.parse_args::<ReadStructAttrs>().unwrap();
 
-        if !attr.error.value().is_empty() {
-            struct_attrs.error = attr.error
+        if attr.error.is_some() {
+            struct_attrs.error = attr.error;
         }
 
-        if !attr.endianness.value().is_empty() {
-            struct_attrs.endianness = attr.endianness
+        if attr.endianness.is_some() {
+            struct_attrs.endianness = attr.endianness;
         }
     }
 
