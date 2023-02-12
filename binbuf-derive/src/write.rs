@@ -20,7 +20,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
 
     // Extract all named fields. This will return an error if there are unnamed
     // fields present
-    let named_fields = match shared::extract_named_fields(struct_data) {
+    let named_fields = match shared::extract_named_fields_from_struct(struct_data) {
         Some(f) => f.named,
         None => {
             return Err(Error::new(

@@ -1,47 +1,38 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
-use structmeta::StructMeta;
 use syn::{
-    punctuated::Punctuated, token::Comma, Attribute, DeriveInput, Error, ExprPath, Field, LitStr,
-    Result,
+    punctuated::Punctuated, token::Comma, Attribute, DataEnum, DataStruct, DeriveInput, Error,
+    ExprPath, Field, Result as SynResult,
 };
 
-use crate::shared;
+use crate::{
+    attrs::{EnumReadAttrs, StructReadAttrs},
+    shared,
+};
 
-#[derive(StructMeta)]
-struct ReadStructAttrs {
-    error: Option<LitStr>,
-    endianness: Option<LitStr>,
-}
-
-impl Default for ReadStructAttrs {
-    fn default() -> Self {
-        Self {
-            error: Some(LitStr::new("binbuf::error::BufferError", Span::call_site())),
-            endianness: Some(LitStr::new("both", Span::call_site())),
+/// Expand the `Readable` derive macro by returning the generated
+/// [`TokenStream`].
+pub fn expand(input: DeriveInput) -> SynResult<TokenStream> {
+    match input.data {
+        syn::Data::Struct(s) => expand_struct(s, &input.ident, input.attrs),
+        syn::Data::Enum(e) => expand_enum(e, &input.ident, input.attrs),
+        syn::Data::Union(_) => {
+            return Err(Error::new(
+                Span::call_site(),
+                "The Readable derive macro can only be used with structs or enums",
+            ))
         }
     }
 }
 
-/// Expand the `Readable` derive macro by returning the generated
-/// [`TokenStream`].
-pub fn expand(input: DeriveInput) -> Result<TokenStream> {
-    let struct_name = &input.ident;
-
-    // First make sure we have a struct. Return the struct data
-    let struct_data = match shared::is_struct(input.data) {
-        Some(s) => s,
-        None => {
-            return Err(Error::new(
-                Span::call_site(),
-                "The Readable derive macro can only be used with structs",
-            ))
-        }
-    };
-
+fn expand_struct(
+    struct_data: DataStruct,
+    struct_name: &Ident,
+    struct_attrs: Vec<Attribute>,
+) -> SynResult<TokenStream> {
     // Extract all named fields. This will return an error if there are unnamed
     // fields present
-    let named_fields = match shared::extract_named_fields(struct_data) {
+    let named_fields = match shared::extract_named_fields_from_struct(struct_data) {
         Some(f) => f.named,
         None => {
             return Err(Error::new(
@@ -56,7 +47,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     }
 
     // Parse struct attributes
-    let struct_attrs = parse_struct_attributes(input.attrs)?;
+    let struct_attrs = StructReadAttrs::parse(struct_attrs)?;
 
     let read_inner: TokenStream = if named_fields.len() == 1 {
         match gen_one_field(named_fields.first().unwrap()) {
@@ -71,12 +62,12 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     };
 
     // Validate the struct args
-    let readable_error: ExprPath = struct_attrs.error.unwrap().parse()?;
+    let readable_error: ExprPath = struct_attrs.error.parse()?;
 
     // Generate trait impls
     let readable_impl = shared::gen_readable_impl(struct_name, read_inner, readable_error);
     let readable_verify_impl =
-        shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness.unwrap())?;
+        shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness)?;
 
     Ok(quote! {
         #readable_impl
@@ -84,8 +75,24 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     })
 }
 
+fn expand_enum(
+    enum_data: DataEnum,
+    enum_name: &Ident,
+    enum_attrs: Vec<Attribute>,
+) -> SynResult<TokenStream> {
+    // If there are no variants, we don't generate code
+    if enum_data.variants.is_empty() {
+        return Ok(quote! {});
+    }
+
+    // Parse enum attributes
+    let enum_attrs = EnumReadAttrs::parse(enum_attrs)?;
+
+    Ok(quote! {})
+}
+
 /// This generates code when there is only one named field in the struct.
-fn gen_one_field(field: &Field) -> Result<TokenStream> {
+fn gen_one_field(field: &Field) -> SynResult<TokenStream> {
     // Extract the field name
     let field_name = field.ident.as_ref().unwrap();
 
@@ -114,8 +121,8 @@ fn gen_one_field(field: &Field) -> Result<TokenStream> {
 }
 
 /// This generates code when there are multiple named fields in the struct.
-fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> Result<TokenStream> {
-    // Here we need esnure the ReadableMulti trait is implemented, how can we achieve that?
+fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> SynResult<TokenStream> {
+    // Here we need ensure the ReadableMulti trait is implemented, how can we achieve that?
     // For now, we just generate a read call for each of the fields
     let mut funcs: Vec<TokenStream> = Vec::new();
     let mut inner: Vec<TokenStream> = Vec::new();
@@ -149,80 +156,4 @@ fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> Result<TokenStream> 
             #(#inner)*
         })
     })
-
-    // let entries = match shared::extract_continuous_field_types(fields, struct_ident) {
-    //     Ok(e) => e,
-    //     Err(err) => return Err(err),
-    // };
-
-    // // Prepare the individual parts of the code gen
-    // let mut funcs: Vec<TokenStream> = Vec::new();
-    // let mut inner: Vec<TokenStream> = Vec::new();
-
-    // for entry in entries {
-    //     if entry.count == 1 {
-    //         let field_type = &entry.ty;
-    //         let field_name = &entry.idents[0];
-
-    //         let var_name = format_ident!("_gen_{}", field_name);
-
-    //         funcs.push(shared::gen_read_func(&var_name, field_type));
-    //         inner.push(quote! {
-    //             #field_name: #var_name,
-    //         });
-    //         continue;
-    //     }
-
-    //     let mut fields = String::new();
-    //     let field_type = &entry.ty;
-
-    //     for ident in &entry.idents {
-    //         fields.push_str(&ident.to_string())
-    //     }
-
-    //     let var_name = format_ident!("_gen_multi_{}", fields);
-    //     funcs.push(shared::gen_multi_read_func(
-    //         &var_name,
-    //         field_type,
-    //         entry.count,
-    //     ));
-
-    //     for i in 0..entry.count {
-    //         let field_name = &entry.idents[i];
-
-    //         inner.push(quote! {
-    //             #field_name: #var_name[#i],
-    //         })
-    //     }
-    // }
-
-    // Ok(quote! {
-    //     #(#funcs)*
-
-    //     return Ok(Self {
-    //         #(#inner)*
-    //     })
-    // })
-}
-
-fn parse_struct_attributes(attrs: Vec<Attribute>) -> Result<ReadStructAttrs> {
-    let mut struct_attrs = ReadStructAttrs::default();
-
-    for attr in attrs {
-        if !attr.path.is_ident("binbuf") {
-            continue;
-        }
-
-        let attr = attr.parse_args::<ReadStructAttrs>().unwrap();
-
-        if attr.error.is_some() {
-            struct_attrs.error = attr.error;
-        }
-
-        if attr.endianness.is_some() {
-            struct_attrs.endianness = attr.endianness;
-        }
-    }
-
-    Ok(struct_attrs)
 }

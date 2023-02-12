@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use syn::{DeriveInput, Error};
 
+mod attrs;
 mod read;
 mod shared;
 mod write;
