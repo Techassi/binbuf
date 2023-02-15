@@ -111,3 +111,19 @@ impl Writeable for Ipv6Addr {
 impl WriteableVerify for Ipv6Addr {
     const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 }
+
+impl Writeable for String {
+    type Error = BufferError;
+
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+        if !self.is_ascii() {
+            return Err(BufferError::InvalidData);
+        }
+
+        Ok(buf.write(self.as_bytes()))
+    }
+}
+
+impl WriteableVerify for String {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
+}
