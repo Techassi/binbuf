@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use binbuf_macros::into_buffer_and_writeable_impl;
 
 use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEndianness};
@@ -245,4 +247,20 @@ impl<T: Writeable> Writeable for Vec<T> {
 
 impl<T: WriteableVerify> WriteableVerify for Vec<T> {
     const SUPPORTED_ENDIANNESS: SupportedEndianness = T::SUPPORTED_ENDIANNESS;
+}
+
+impl<K, V: Writeable> Writeable for HashMap<K, V> {
+    type Error = V::Error;
+
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+        let mut n = 0;
+        for value in self.values() {
+            n += value.write::<E>(buf)?
+        }
+        Ok(n)
+    }
+}
+
+impl<K, V: WriteableVerify> WriteableVerify for HashMap<K, V> {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = V::SUPPORTED_ENDIANNESS;
 }

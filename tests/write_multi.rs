@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use binbuf::prelude::*;
 
 #[test]
@@ -68,6 +70,22 @@ fn test_write_multi_u128() {
                 b.bytes(),
                 &[69, 88, 65, 77, 80, 76, 69, 33, 69, 88, 65, 77, 80, 76, 69, 33]
             );
+        }
+        Err(err) => panic!("{}", err),
+    }
+}
+
+#[test]
+fn test_write_multi_hashmap() {
+    let mut m: HashMap<&str, u8> = HashMap::new();
+    m.insert("69", 69);
+    m.insert("88", 88);
+
+    let mut b = WriteBuffer::new();
+    match m.write::<BigEndian>(&mut b) {
+        Ok(n) => {
+            assert_eq!(n, 2);
+            assert_eq!(b.bytes(), &[69, 88]);
         }
         Err(err) => panic!("{}", err),
     }
