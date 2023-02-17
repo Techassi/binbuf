@@ -8,6 +8,7 @@ pub type WriteBufferResult = Result<usize, BufferError>;
 
 #[derive(Debug, Default)]
 pub struct WriteBuffer {
+    spans: Vec<usize>,
     buf: Vec<u8>,
 }
 
@@ -44,6 +45,7 @@ impl WriteBuffer {
         let b = b.as_ref();
         let mut buf = Self {
             buf: Vec::with_capacity(b.len()),
+            spans: Vec::new(),
         };
 
         buf.write(b);
@@ -65,6 +67,10 @@ impl WriteBuffer {
     /// ```
     pub fn push(&mut self, b: u8) {
         self.buf.push(b);
+
+        if let Some(last) = self.spans.last_mut() {
+            *last += 1;
+        }
     }
 
     /// Clears the [`WriteBuffer`], removing all bytes.
@@ -130,9 +136,15 @@ impl WriteBuffer {
     /// ```
     pub fn write<T: AsRef<[u8]>>(&mut self, b: T) -> usize {
         let b = b.as_ref();
+        let l = b.len();
+
         self.buf.extend_from_slice(b);
 
-        b.len()
+        if let Some(last) = self.spans.last_mut() {
+            *last += l;
+        }
+
+        return l;
     }
 
     /// Writes a character string to the [`WriteBuffer`]. This will push the
@@ -167,6 +179,18 @@ impl WriteBuffer {
 
         self.push(len as u8);
         Ok(self.write(s) + 1)
+    }
+
+    pub fn enter(&mut self) {
+        self.spans.push(0);
+    }
+
+    pub fn exit(&mut self) -> usize {
+        let n = self.spans.pop().unwrap_or(self.len());
+        if let Some(last) = self.spans.last_mut() {
+            *last += n;
+        }
+        n
     }
 
     /// Returns the content of [`WriteBuffer`] as a slice of bytes.
