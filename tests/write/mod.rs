@@ -2,6 +2,13 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use binbuf::prelude::*;
 
+mod write_buffer;
+mod write_derive;
+mod write_impl;
+mod write_macro;
+mod write_multi;
+mod write_span;
+
 #[test]
 fn test_write_u8() {
     let mut b = WriteBuffer::new();

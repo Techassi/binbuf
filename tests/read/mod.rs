@@ -2,6 +2,12 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use binbuf::prelude::*;
 
+mod read_buffer;
+mod read_derive_enum;
+mod read_derive_struct;
+mod read_impl;
+mod read_multi;
+
 #[test]
 fn test_read_u8() {
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];

@@ -25,3 +25,15 @@ macros = []
 binbuf-derive = { path = "binbuf-derive" }
 binbuf-macros = { path = "binbuf-macros" }
 thiserror = "1.0.38"
+
+[[test]]
+name = "test_read"
+path = "tests/read/mod.rs"
+
+[[test]]
+name = "test_read_derive_enum"
+path = "tests/read/read_derive_enum.rs"
+
+[[test]]
+name = "test_write"
+path = "tests/write/mod.rs"
