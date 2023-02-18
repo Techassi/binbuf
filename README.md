@@ -1,16 +1,14 @@
 # binbuf
 
-binbuf (short for *binary buffers*) is a small library to work with binary (network) data in Rust.
+binbuf (short for *binary buffers*) is a small library to work with binary (network) data in Rust. Just add
+`binbuf::prelude::*` to your imports. This imports the most important parts of the library.
 
-## TODOs
+## Reading from `ReadBuffer`
 
-- Try to implement elegant and easy-to-use String reading and writing
+### Reading basic types
 
-## Usage
-
-Just add `use binbuf::prelude::*` to your imports. This imports the most important parts of the library.
-
-### Reading basics
+The library provides multiple methods to read basic data types like `u8`, `u16`, `u32`, `u64`, `u128`, `usize`,
+`Ipv4Addr`, and `Ipv6Addr` in big and little-endian byte order.
 
 ```rust
 let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
@@ -22,10 +20,9 @@ match u16::read::<BigEndian>(&mut b) {
 }
 ```
 
-### Reading into custom data structures
+### Reading structs
 
-To read custom data structures we can use the derive macro `#[derive(Read)]`. Currently only structs with the following
-field types are supported: `u8`, `u16`, `u32`, `u64`, `u128`, `usize`, `Ipv4Addr` and `Ipv6Addr`.
+To read custom data structs, we can use the derive macro `#[derive(Read)]` to annotate the structs.
 
 ```rust
 #[derive(Read)]
@@ -36,99 +33,56 @@ struct Data {
 let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
 let mut buf = ReadBuffer::new(b.as_slice());
 
-let data = Data::read::<BigEndian>(&mut buf).unwrap();
-assert_eq!(data.inner, 17752)
+match Data::read::<BigEndian>(&mut buf) {
+    Ok(data) => assert_eq!(data.inner, 17752),
+    Err(err) => panic!("{}", err)
+}
 ```
 
----
+Customize the derive macro by annotating the struct with additional attributes: `#[binbuf()]`. Currently, the following attributes are supported:
 
-If the derive macro cannot be used we can still manually implement the `Readable` trait:
+- `#[binbuf(error = "...")]`
+
+  > Default value: `binbuf::error::BufferError`
+
+  Provide a custom error. The error has to implement these traits:
+
+  - `std::fmt::Display`
+  - `std::error::Error`
+  - `From<BufferError>`
+
+- `#[binbuf(endianness = "...")]`
+
+  > Default value: `both`
+
+  Specify the supported endianness for the `ReadableVerify` trait. Possible values are:
+
+  - `little`
+  - `both`
+  - `big`
+
+**Full example**
 
 ```rust
+#[derive(Read)]
+#[binbuf(error = "CustomError", endianness = "big")]
 struct Data {
     inner: u16,
 }
-
-impl Readable for Data {
-    type Error = BufferError;
-
-    fn read<E: Endianness>(buf: &mut impl ToReadBuffer) -> Result<Self, Self::Error> {
-        let inner = u16::read::<E>(buf)?;
-
-        Ok(Self { inner })
-    }
-}
-
-let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-let mut buf = ReadBuffer::new(b.as_slice());
-
-let data = Data::read::<BigEndian>(&mut buf).unwrap();
-assert_eq!(data.inner, 17752)
 ```
 
----
-
-### Writing basics
-
-```rust
-let mut b = WriteBuffer::new();
-
-match 17752u16.write::<BigEndian>(&mut b) {
-    Ok(n) => {
-        assert_eq!(n, 2);
-        assert_eq!(b.bytes(), &[69, 88]);
-    }
-    Err(err) => panic!("{}", err),
-}
-```
-
-### Writing custom data structures
-
-Writing custom data structures is as straight forward as reading them.
+The library works well with the `thiserror` crate. Implementing custom errors with the `Error` derive macro is
+straightforward:
 
 ```rust
-#[derive(Write)]
-struct Data {
-    inner: u16,
+use thiserror::Error;
+
+#[derive(Error)]
+enum CustomError {
+    #[error("Invalid data")]
+    Invalid,
+
+    #[error("Buffer error: {0}")]
+    BufferError(#[from] BufferError)
 }
-
-let d = Data { inner: 17752 };
-
-let mut b = WriteBuffer::new();
-match d.write::<BigEndian>(&mut b) {
-    Ok(n) => {
-        assert_eq!(n, 2);
-        assert_eq!(b.bytes(), &[69, 88]);
-    }
-    Err(err) => panic!("{}", err),
-};
-```
-
----
-
-If the derive macro cannot be used we can still manually implement the `Writeable` trait:
-
-```rust
-struct Data {
-    inner: u16,
-}
-
-impl Writeable for Data {
-    type Error = BufferError;
-
-    fn write<E: Endianness>(&self, buf: &mut impl ToWriteBuffer) -> Result<usize, Self::Error> {
-        self.inner.write::<E>(buf)
-    }
-}
-
-let d = Data { inner: 17752 };
-
-let mut b = WriteBuffer::new();
-match d.write::<BigEndian>(&mut b) {
-    Ok(n) => {
-        assert_eq!(n, 2);
-        assert_eq!(b.bytes(), &[69, 88]);
-    }
-    Err(err) => panic!("{}", err),
-};
 ```
