@@ -52,7 +52,7 @@ impl<'a> ReadBuffer<'a> {
             return Ok(*first);
         }
 
-        Err(BufferError::BufTooShort)
+        Err(BufferError::BufferTooShort)
     }
 
     /// Pop off a byte from the front of the buffer but do not return the
@@ -72,7 +72,7 @@ impl<'a> ReadBuffer<'a> {
     /// `peekn()`.
     pub fn skipn(&mut self, n: usize) -> ReadBufferResult<()> {
         if n > self.len() {
-            return Err(BufferError::BufTooShort);
+            return Err(BufferError::BufferTooShort);
         }
 
         if n == 1 {
@@ -259,7 +259,7 @@ impl<'a> ReadBuffer<'a> {
     pub fn read_char_string(&mut self, max_len: Option<u8>) -> ReadBufferResult<&[u8]> {
         let len = match self.peek() {
             Some(len) => len as usize,
-            None => return Err(BufferError::BufTooShort),
+            None => return Err(BufferError::BufferTooShort),
         };
 
         if let Some(max_len) = max_len {
@@ -289,7 +289,7 @@ impl<'a> ReadBuffer<'a> {
     /// ```
     pub fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&[u8]> {
         if nbytes > self.len() {
-            return Err(BufferError::BufTooShort);
+            return Err(BufferError::BufferTooShort);
         }
 
         let (slice, rest) = self.rest.split_at(nbytes);

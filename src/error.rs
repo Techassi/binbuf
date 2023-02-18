@@ -26,7 +26,7 @@ pub enum BufferError {
     /// This indicates that the buffer is too short to read the requested
     /// amount of bytes.
     #[error("Buffer too short")]
-    BufTooShort,
+    BufferTooShort,
 
     /// This indicates that the caller encountered a custom error, which cannot
     /// be mapped to a different error. This acts as a "fallback" to still
