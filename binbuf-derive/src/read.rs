@@ -1,8 +1,8 @@
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
-    punctuated::Punctuated, token::Comma, Attribute, DataEnum, DataStruct, DeriveInput, Error,
-    ExprPath, Field, Result as SynResult,
+    punctuated::Punctuated, spanned::Spanned, token::Comma, Attribute, DataEnum, DataStruct,
+    DeriveInput, Error, ExprPath, Field, Result as SynResult,
 };
 
 use crate::{
@@ -87,8 +87,125 @@ fn expand_enum(
 
     // Parse enum attributes
     let enum_attrs = EnumReadAttrs::parse(enum_attrs)?;
+    let error: ExprPath = enum_attrs.error.parse()?;
+    let repr: ExprPath = enum_attrs.repr.parse()?;
+    println!("{:?}", enum_attrs);
 
-    Ok(quote! {})
+    let read_inner = quote! {
+        Self::try_from(#repr::read::<E>(buf)?)
+    };
+
+    // Implement From<REPR> for ENUM
+    let from_repr_impl = gen_from_repr_impl_enum(enum_name, &enum_data, &enum_attrs)?;
+    let readable_impl = shared::gen_readable_impl(enum_name, read_inner, error);
+    let readable_verify_impl = shared::gen_readable_verify_impl(enum_name, enum_attrs.endianness)?;
+
+    // let from_enum_impl = gen_from_enum_impl_repr(enum_name, &enum_data, &enum_attrs)?;
+
+    Ok(quote! {
+        #from_repr_impl
+        #readable_impl
+        #readable_verify_impl
+    })
+}
+
+fn gen_from_repr_impl_enum(
+    enum_name: &Ident,
+    enum_data: &DataEnum,
+    enum_attrs: &EnumReadAttrs,
+) -> SynResult<TokenStream> {
+    let error: ExprPath = enum_attrs.error.parse()?;
+    let repr: ExprPath = enum_attrs.repr.parse()?;
+
+    let repr_type = repr.path.get_ident().unwrap().to_string();
+
+    let mut variants: Vec<TokenStream> = Vec::new();
+    let mut index: u128 = 0;
+
+    for variant in &enum_data.variants {
+        let variant_ident = &variant.ident;
+        let variant_value = match repr_type.as_str() {
+            "u8" => Literal::u8_suffixed(index as u8),
+            "u16" => Literal::u16_suffixed(index as u16),
+            "u32" => Literal::u32_suffixed(index as u32),
+            "u64" => Literal::u64_suffixed(index as u64),
+            "u128" => Literal::u128_suffixed(index),
+            _ => {
+                return Err(Error::new(
+                    variant.span(),
+                    "Invalid variant representation type",
+                ))
+            }
+        };
+
+        variants.push(quote! {
+            #variant_value => Ok(Self::#variant_ident),
+        });
+
+        index += 1;
+    }
+
+    // TODO (Techassi): This should not be hardcoded. Introduce the possibility to specify an error variant
+    variants.push(quote! {
+        _ => Err(Self::Error::InvalidData),
+    });
+
+    Ok(quote! {
+        impl TryFrom<#repr> for #enum_name {
+            type Error = #error;
+
+            fn try_from(value: #repr) -> Result<Self, Self::Error> {
+                match value {
+                    #(#variants)*
+                }
+            }
+        }
+    })
+}
+
+fn gen_from_enum_impl_repr(
+    enum_name: &Ident,
+    enum_data: &DataEnum,
+    enum_attrs: &EnumReadAttrs,
+) -> SynResult<TokenStream> {
+    let repr: ExprPath = enum_attrs.repr.parse()?;
+    let repr_type = repr.path.get_ident().unwrap().to_string();
+
+    let mut variants: Vec<TokenStream> = Vec::new();
+    let mut index: u128 = 0;
+
+    for variant in &enum_data.variants {
+        let variant_ident = &variant.ident;
+        let variant_value = match repr_type.as_str() {
+            "u8" => Literal::u8_suffixed(index as u8),
+            "u16" => Literal::u16_suffixed(index as u16),
+            "u32" => Literal::u32_suffixed(index as u32),
+            "u64" => Literal::u64_suffixed(index as u64),
+            "u128" => Literal::u128_suffixed(index),
+            _ => {
+                return Err(Error::new(
+                    variant.span(),
+                    "Invalid variant representation type",
+                ))
+            }
+        };
+
+        variants.push(quote! {
+            #enum_name::#variant_ident => #variant_value,
+        });
+
+        index += 1;
+    }
+
+    Ok(quote! {
+        impl From<#enum_name> for #repr {
+            fn from(value: #enum_name) -> Self {
+                match value {
+                    #(#variants)*
+                }
+            }
+        }
+    })
 }
 
 /// This generates code when there is only one named field in the struct.

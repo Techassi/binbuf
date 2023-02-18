@@ -1,18 +1,19 @@
 use proc_macro2::Span;
 use structmeta::StructMeta;
-use syn::{Attribute, Error, LitStr};
+use syn::{spanned::Spanned, Attribute, Error, LitStr};
 
 #[derive(StructMeta)]
 pub struct RawEnumReadAttrs {
     error: Option<LitStr>,
     endianness: Option<LitStr>,
-    repr: LitStr,
+    repr: Option<LitStr>,
 }
 
+#[derive(Debug)]
 pub struct EnumReadAttrs {
-    error: LitStr,
-    endianness: LitStr,
-    repr: LitStr,
+    pub error: LitStr,
+    pub endianness: LitStr,
+    pub repr: LitStr,
 }
 
 impl Default for EnumReadAttrs {
@@ -25,8 +26,24 @@ impl Default for EnumReadAttrs {
     }
 }
 
-impl From<Option<RawEnumReadAttrs>> for EnumReadAttrs {
-    fn from(value: Option<RawEnumReadAttrs>) -> Self {
+impl EnumReadAttrs {
+    pub fn parse(attrs: Vec<Attribute>) -> Result<EnumReadAttrs, Error> {
+        let mut struct_attrs: Option<RawEnumReadAttrs> = None;
+        let mut span = Span::call_site();
+
+        for attr in attrs {
+            if !attr.path.is_ident("binbuf") {
+                continue;
+            }
+
+            struct_attrs = Some(attr.parse_args::<RawEnumReadAttrs>()?);
+            span = attr.span()
+        }
+
+        EnumReadAttrs::try_from(struct_attrs, span)
+    }
+
+    fn try_from(value: Option<RawEnumReadAttrs>, span: Span) -> Result<EnumReadAttrs, Error> {
         match value {
             Some(attrs) => {
                 let mut enum_attrs = EnumReadAttrs::default();
@@ -39,27 +56,18 @@ impl From<Option<RawEnumReadAttrs>> for EnumReadAttrs {
                     enum_attrs.error = attrs.error.unwrap();
                 }
 
-                enum_attrs.repr = attrs.repr;
+                if attrs.repr.is_some() {
+                    let repr = attrs.repr.unwrap();
+                    if !["u8", "u16", "u32", "u64", "u128"].contains(&repr.value().as_str()) {
+                        return Err(
+                            Error::new(span, "Only u8, u16, u32, u64 and u128 are supported enum variant representations")
+                        );
+                    }
+                }
 
-                enum_attrs
+                Ok(enum_attrs)
             }
-            None => EnumReadAttrs::default(),
+            None => Ok(EnumReadAttrs::default()),
         }
-    }
-}
-
-impl EnumReadAttrs {
-    pub fn parse(attrs: Vec<Attribute>) -> Result<EnumReadAttrs, Error> {
-        let mut struct_attrs: Option<RawEnumReadAttrs> = None;
-
-        for attr in attrs {
-            if !attr.path.is_ident("binbuf") {
-                continue;
-            }
-
-            struct_attrs = Some(attr.parse_args::<RawEnumReadAttrs>()?);
-        }
-
-        Ok(EnumReadAttrs::from(struct_attrs))
     }
 }
