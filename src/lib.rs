@@ -35,6 +35,7 @@ pub trait Endianness {
     fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize;
 }
 
+#[derive(Debug)]
 pub struct BigEndian {}
 impl Endianness for BigEndian {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool {
@@ -54,6 +55,7 @@ impl Endianness for BigEndian {
     }
 }
 
+#[derive(Debug)]
 pub struct LittleEndian {}
 impl Endianness for LittleEndian {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool {
