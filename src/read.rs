@@ -44,7 +44,7 @@ impl<'a> ReadBuffer<'a> {
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.pop(), Ok(88));
-    /// assert_eq!(b.pop(), Err(BufferError::BufTooShort));
+    /// assert_eq!(b.pop(), Err(BufferError::BufferTooShort));
     /// ```
     pub fn pop(&mut self) -> ReadBufferResult<u8> {
         if let Some((first, rest)) = self.rest.split_first() {

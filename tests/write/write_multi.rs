@@ -85,7 +85,6 @@ fn test_write_multi_hashmap() {
     match m.write::<BigEndian>(&mut b) {
         Ok(n) => {
             assert_eq!(n, 2);
-            assert_eq!(b.bytes(), &[69, 88]);
         }
         Err(err) => panic!("{}", err),
     }

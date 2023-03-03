@@ -61,7 +61,7 @@ fn test_readable_derive_ipaddr() {
 #[cfg(feature = "derive")]
 #[test]
 #[allow(dead_code, unused_variables)]
-#[should_panic(expected = "called `Result::unwrap()` on an `Err` value: BufTooShort")]
+#[should_panic(expected = "called `Result::unwrap()` on an `Err` value: BufferTooShort")]
 fn test_readable_derive_overflow() {
     use binbuf::prelude::*;
 
@@ -118,7 +118,7 @@ fn test_readable_derive_struct_attrs_error() {
     let mut buf = ReadBuffer::new(b.as_slice());
 
     let result = Data::read::<BigEndian>(&mut buf);
-    assert_eq!(result, Result::Err(BufferError::BufTooShort));
+    assert_eq!(result, Result::Err(BufferError::BufferTooShort));
 }
 
 #[cfg(feature = "derive")]
