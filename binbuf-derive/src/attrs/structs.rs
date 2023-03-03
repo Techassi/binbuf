@@ -1,12 +1,7 @@
 use proc_macro2::Span;
-use structmeta::StructMeta;
-use syn::{Attribute, Error, LitStr};
+use syn::{Error, LitStr};
 
-#[derive(StructMeta)]
-pub struct RawStructReadAttrs {
-    pub error: Option<LitStr>,
-    pub endianness: Option<LitStr>,
-}
+use crate::attrs::{RawContainerAttrs, TryFromAttrs};
 
 pub struct StructReadAttrs {
     pub error: LitStr,
@@ -22,11 +17,14 @@ impl Default for StructReadAttrs {
     }
 }
 
-impl From<Option<RawStructReadAttrs>> for StructReadAttrs {
-    fn from(value: Option<RawStructReadAttrs>) -> Self {
+impl TryFromAttrs<RawContainerAttrs> for StructReadAttrs {
+    fn try_from(value: Option<RawContainerAttrs>, _span: Span) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
         match value {
             Some(attrs) => {
-                let mut struct_attrs = StructReadAttrs::default();
+                let mut struct_attrs = Self::default();
 
                 if attrs.endianness.is_some() {
                     struct_attrs.endianness = attrs.endianness.unwrap();
@@ -36,25 +34,9 @@ impl From<Option<RawStructReadAttrs>> for StructReadAttrs {
                     struct_attrs.error = attrs.error.unwrap();
                 }
 
-                struct_attrs
+                Ok(struct_attrs)
             }
-            None => StructReadAttrs::default(),
+            None => Ok(Self::default()),
         }
-    }
-}
-
-impl StructReadAttrs {
-    pub fn parse(attrs: Vec<Attribute>) -> Result<StructReadAttrs, Error> {
-        let mut struct_attrs: Option<RawStructReadAttrs> = None;
-
-        for attr in attrs {
-            if !attr.path.is_ident("binbuf") {
-                continue;
-            }
-
-            struct_attrs = Some(attr.parse_args::<RawStructReadAttrs>()?);
-        }
-
-        Ok(StructReadAttrs::from(struct_attrs))
     }
 }

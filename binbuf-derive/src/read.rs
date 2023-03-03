@@ -6,7 +6,7 @@ use syn::{
 };
 
 use crate::{
-    attrs::{EnumReadAttrs, StructReadAttrs},
+    attrs::{EnumReadAttrs, RawContainerAttrs, StructReadAttrs},
     shared,
 };
 
@@ -45,7 +45,7 @@ fn expand_struct(
     }
 
     // Parse struct attributes
-    let struct_attrs = StructReadAttrs::parse(struct_attrs)?;
+    let struct_attrs = RawContainerAttrs::parse::<StructReadAttrs>(struct_attrs)?;
 
     let read_inner: TokenStream = if named_fields.len() == 1 {
         match gen_one_field(named_fields.first().unwrap()) {
@@ -84,7 +84,7 @@ fn expand_enum(
     }
 
     // Parse enum attributes
-    let enum_attrs = EnumReadAttrs::parse(enum_attrs)?;
+    let enum_attrs = RawContainerAttrs::parse::<EnumReadAttrs>(enum_attrs)?;
     let error: ExprPath = enum_attrs.error.parse()?;
     let repr: ExprPath = enum_attrs.repr.parse()?;
     println!("{enum_attrs:?}");

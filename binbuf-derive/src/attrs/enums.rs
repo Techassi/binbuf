@@ -1,13 +1,7 @@
 use proc_macro2::Span;
-use structmeta::StructMeta;
-use syn::{spanned::Spanned, Attribute, Error, LitStr};
+use syn::{Error, LitStr};
 
-#[derive(StructMeta)]
-pub struct RawEnumReadAttrs {
-    error: Option<LitStr>,
-    endianness: Option<LitStr>,
-    repr: Option<LitStr>,
-}
+use crate::attrs::{RawContainerAttrs, TryFromAttrs};
 
 #[derive(Debug)]
 pub struct EnumReadAttrs {
@@ -26,27 +20,14 @@ impl Default for EnumReadAttrs {
     }
 }
 
-impl EnumReadAttrs {
-    pub fn parse(attrs: Vec<Attribute>) -> Result<EnumReadAttrs, Error> {
-        let mut struct_attrs: Option<RawEnumReadAttrs> = None;
-        let mut span = Span::call_site();
-
-        for attr in attrs {
-            if !attr.path.is_ident("binbuf") {
-                continue;
-            }
-
-            struct_attrs = Some(attr.parse_args::<RawEnumReadAttrs>()?);
-            span = attr.span()
-        }
-
-        EnumReadAttrs::try_from(struct_attrs, span)
-    }
-
-    fn try_from(value: Option<RawEnumReadAttrs>, span: Span) -> Result<EnumReadAttrs, Error> {
+impl TryFromAttrs<RawContainerAttrs> for EnumReadAttrs {
+    fn try_from(value: Option<RawContainerAttrs>, span: Span) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
         match value {
             Some(attrs) => {
-                let mut enum_attrs = EnumReadAttrs::default();
+                let mut enum_attrs = Self::default();
 
                 if attrs.endianness.is_some() {
                     enum_attrs.endianness = attrs.endianness.unwrap();
@@ -67,7 +48,7 @@ impl EnumReadAttrs {
 
                 Ok(enum_attrs)
             }
-            None => Ok(EnumReadAttrs::default()),
+            None => Ok(Self::default()),
         }
     }
 }
