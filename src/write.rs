@@ -135,16 +135,16 @@ impl WriteBuffer {
     /// assert_eq!(b.bytes(), &[69, 88, 65]);
     /// ```
     pub fn write<T: AsRef<[u8]>>(&mut self, b: T) -> usize {
-        let b = b.as_ref();
-        let l = b.len();
+        let bytes = b.as_ref();
+        let len = bytes.len();
 
-        self.buf.extend_from_slice(b);
+        self.buf.extend_from_slice(bytes);
 
         if let Some(last) = self.spans.last_mut() {
-            *last += l;
+            *last += len;
         }
 
-        return l;
+        len
     }
 
     /// Writes a character string to the [`WriteBuffer`]. This will push the

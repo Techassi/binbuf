@@ -16,12 +16,10 @@ pub fn expand(input: DeriveInput) -> SynResult<TokenStream> {
     match input.data {
         syn::Data::Struct(s) => expand_struct(s, &input.ident, input.attrs),
         syn::Data::Enum(e) => expand_enum(e, &input.ident, input.attrs),
-        syn::Data::Union(_) => {
-            return Err(Error::new(
-                Span::call_site(),
-                "The Readable derive macro can only be used with structs or enums",
-            ))
-        }
+        syn::Data::Union(_) => Err(Error::new(
+            Span::call_site(),
+            "The Readable derive macro can only be used with structs or enums",
+        )),
     }
 }
 
@@ -89,7 +87,7 @@ fn expand_enum(
     let enum_attrs = EnumReadAttrs::parse(enum_attrs)?;
     let error: ExprPath = enum_attrs.error.parse()?;
     let repr: ExprPath = enum_attrs.repr.parse()?;
-    println!("{:?}", enum_attrs);
+    println!("{enum_attrs:?}");
 
     let read_inner = quote! {
         Self::try_from(#repr::read::<E>(buf)?)
@@ -120,9 +118,8 @@ fn gen_from_repr_impl_enum(
     let repr_type = repr.path.get_ident().unwrap().to_string();
 
     let mut variants: Vec<TokenStream> = Vec::new();
-    let mut index: u128 = 0;
 
-    for variant in &enum_data.variants {
+    for (index, variant) in (0_u128..).zip((&enum_data.variants).into_iter()) {
         let variant_ident = &variant.ident;
         let variant_value = match repr_type.as_str() {
             "u8" => Literal::u8_suffixed(index as u8),
@@ -141,8 +138,6 @@ fn gen_from_repr_impl_enum(
         variants.push(quote! {
             #variant_value => Ok(Self::#variant_ident),
         });
-
-        index += 1;
     }
 
     // TODO (Techassi): This should not be hardcoded. Introduce the possibility to specify an error variant
@@ -173,9 +168,8 @@ fn gen_from_enum_impl_repr(
     let repr_type = repr.path.get_ident().unwrap().to_string();
 
     let mut variants: Vec<TokenStream> = Vec::new();
-    let mut index: u128 = 0;
 
-    for variant in &enum_data.variants {
+    for (index, variant) in (0_u128..).zip((&enum_data.variants).into_iter()) {
         let variant_ident = &variant.ident;
         let variant_value = match repr_type.as_str() {
             "u8" => Literal::u8_suffixed(index as u8),
@@ -194,8 +188,6 @@ fn gen_from_enum_impl_repr(
         variants.push(quote! {
             #enum_name::#variant_ident => #variant_value,
         });
-
-        index += 1;
     }
 
     Ok(quote! {
