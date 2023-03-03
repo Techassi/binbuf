@@ -151,6 +151,7 @@ fn gen_from_repr_impl_enum(
     });
 
     Ok(quote! {
+        #[automatically_derived]
         impl TryFrom<#repr> for #enum_name {
             type Error = #error;
 

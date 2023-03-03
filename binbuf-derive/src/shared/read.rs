@@ -23,6 +23,7 @@ pub fn gen_readable_impl(
     );
 
     quote! {
+        #[automatically_derived]
         impl binbuf::read::Readable for #struct_name {
             type Error = #error;
             #[doc = #doc_header]
@@ -63,6 +64,7 @@ pub fn gen_readable_verify_impl(struct_name: &Ident, endianness: LitStr) -> Resu
     };
 
     Ok(quote! {
+        #[automatically_derived]
         impl binbuf::read::ReadableVerify for #struct_name {
             const SUPPORTED_ENDIANNESS: binbuf::SupportedEndianness = #supported_endianness;
         }

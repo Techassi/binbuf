@@ -53,6 +53,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     );
 
     Ok(quote! {
+        #[automatically_derived]
         impl Writeable for #struct_name {
             type Error = BufferError;
 
