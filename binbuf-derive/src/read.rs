@@ -6,7 +6,9 @@ use syn::{
 };
 
 use crate::{
-    attrs::{EnumReadAttrs, RawContainerAttrs, StructReadAttrs},
+    attrs::{
+        AttrsParse, EnumReadAttrs, FieldAttrs, RawContainerAttrs, RawFieldAttrs, StructReadAttrs,
+    },
     shared,
 };
 
@@ -47,6 +49,7 @@ fn expand_struct(
     // Parse struct attributes
     let struct_attrs = RawContainerAttrs::parse::<StructReadAttrs>(struct_attrs)?;
 
+    // TODO (Techassi): Make this always a loop to simplify field attr parsing
     let read_inner: TokenStream = if named_fields.len() == 1 {
         match gen_one_field(named_fields.first().unwrap()) {
             Ok(ts) => ts,
@@ -203,6 +206,9 @@ fn gen_from_enum_impl_repr(
 
 /// This generates code when there is only one named field in the struct.
 fn gen_one_field(field: &Field) -> SynResult<TokenStream> {
+    // Extract field attrs
+    let attrs = RawFieldAttrs::parse::<FieldAttrs>(field.attrs.clone())?;
+
     // Extract the field name
     let field_name = field.ident.as_ref().unwrap();
 

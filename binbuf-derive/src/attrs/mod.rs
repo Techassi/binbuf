@@ -1,6 +1,6 @@
 use proc_macro2::Span;
 use structmeta::StructMeta;
-use syn::{spanned::Spanned, Attribute, Error, LitStr};
+use syn::{parse::Parse, spanned::Spanned, Attribute, Error, LitBool, LitStr};
 
 mod enums;
 mod structs;
@@ -14,19 +14,12 @@ pub trait TryFromAttrs<T> {
         Self: Sized;
 }
 
-#[derive(StructMeta)]
-pub struct RawContainerAttrs {
-    endianness: Option<LitStr>,
-    error: Option<LitStr>,
-    repr: Option<LitStr>,
-}
-
-impl RawContainerAttrs {
-    pub fn parse<C>(attrs: Vec<Attribute>) -> Result<C, Error>
+pub trait AttrsParse: Sized + Parse {
+    fn parse<T>(attrs: Vec<Attribute>) -> Result<T, Error>
     where
-        C: TryFromAttrs<RawContainerAttrs> + Default,
+        T: TryFromAttrs<Self> + Default,
     {
-        let mut container_attrs: Option<Self> = None;
+        let mut parsed_attrs: Option<Self> = None;
         let mut span = Span::call_site();
 
         for attr in attrs {
@@ -34,10 +27,28 @@ impl RawContainerAttrs {
                 continue;
             }
 
-            container_attrs = Some(attr.parse_args::<Self>()?);
+            parsed_attrs = Some(attr.parse_args::<Self>()?);
             span = attr.span()
         }
 
-        C::try_from(container_attrs, span)
+        T::try_from(parsed_attrs, span)
     }
 }
+
+#[derive(Debug, StructMeta)]
+pub struct RawContainerAttrs {
+    endianness: Option<LitStr>,
+    error: Option<LitStr>,
+    repr: Option<LitStr>,
+}
+
+impl AttrsParse for RawContainerAttrs {}
+
+#[derive(Debug, StructMeta)]
+pub struct RawFieldAttrs {
+    skip_write: Option<LitBool>,
+    skip_read: Option<LitBool>,
+    skip: Option<LitBool>,
+}
+
+impl AttrsParse for RawFieldAttrs {}
