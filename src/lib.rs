@@ -87,7 +87,7 @@ pub mod prelude {
     };
 
     #[cfg(feature = "derive")]
-    pub use binbuf_derive::{Read, Write};
+    pub use binbuf_derive::{readable_macro_derive, writeable_macro_derive};
 
     #[cfg(feature = "macros")]
     pub use binbuf_macros::bytes_written;

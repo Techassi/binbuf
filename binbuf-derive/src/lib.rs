@@ -2,15 +2,16 @@ use proc_macro::TokenStream;
 use syn::{DeriveInput, Error};
 
 mod attrs;
-mod read;
+mod readable;
 mod shared;
-mod write;
+mod writeable;
 
-#[proc_macro_derive(Read, attributes(binbuf))]
-/// Annotating a struct with the derive macro [`Read`] adds the `read_from`
-/// function which provides a convenient method to read data from a (network)
-/// byte slice and construct the target struct based on the read values. This
-/// macro is only available when the `derive` feature is used.
+#[proc_macro_derive(Readable, attributes(binbuf))]
+/// Annotating a struct or enum with the derive macro [`Readable`] automatically
+/// implements the [`Readable`] trait and all its required functions and types.
+/// The trait provides a convenient method to read data from a (network) byte
+/// slice and construct the target struct based on the read values. This macro
+/// is only available when the `derive` feature is used.
 ///
 /// ### Example
 ///
@@ -31,18 +32,19 @@ mod write;
 /// assert_eq!(t.a, 17752);
 /// assert_eq!(t.b, 16717);
 /// ```
-pub fn read_macro_derive(input: TokenStream) -> TokenStream {
+pub fn readable_macro_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
-    read::expand(input)
+    readable::expand(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
 
-#[proc_macro_derive(Write)]
-/// Annotating a struct with the derive macro [`Write`] adds the `write_into`
-/// function which provides a convenient method to write struct data into a
-/// byte slice.
+#[proc_macro_derive(Writeable)]
+/// Annotating a struct or enum with the derive macro [`Writeable`]
+/// automatically implements the [`Writeable`] trait and all its required
+/// functions and types. This macro is only available when the `derive` feature
+/// is used.
 ///
 /// ### Example
 ///
@@ -66,10 +68,10 @@ pub fn read_macro_derive(input: TokenStream) -> TokenStream {
 /// assert_eq!(b, vec![69, 88, 65, 77]);
 /// assert_eq!(n, 4);
 /// ```
-pub fn write_macro_derive(input: TokenStream) -> TokenStream {
+pub fn writeable_macro_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
-    write::expand(input)
+    writeable::expand(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
