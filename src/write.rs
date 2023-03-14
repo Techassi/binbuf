@@ -261,11 +261,11 @@ impl<T: Writeable> Writeable for Vec<T> {
     type Error = T::Error;
 
     fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
-        let mut written = 0;
+        buf.enter();
         for item in self.iter() {
-            written += item.write::<E>(buf)?
+            item.write::<E>(buf)?;
         }
-        Ok(written)
+        Ok(buf.exit())
     }
 }
 
@@ -277,11 +277,11 @@ impl<K, V: Writeable> Writeable for HashMap<K, V> {
     type Error = V::Error;
 
     fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
-        let mut n = 0;
+        buf.enter();
         for value in self.values() {
-            n += value.write::<E>(buf)?
+            value.write::<E>(buf)?;
         }
-        Ok(n)
+        Ok(buf.exit())
     }
 }
 
