@@ -3,7 +3,7 @@
 fn test_readable_derive_simple() {
     use binbuf::prelude::*;
 
-    #[derive(Debug, PartialEq, Read)]
+    #[derive(Debug, PartialEq, Readable)]
     enum Code {
         Request,
         Reply,
@@ -28,7 +28,7 @@ fn test_readable_derive_simple() {
 fn test_readable_derive_invalid() {
     use binbuf::prelude::*;
 
-    #[derive(Debug, PartialEq, Read)]
+    #[derive(Debug, PartialEq, Readable)]
     enum Code {
         Request,
         Reply,

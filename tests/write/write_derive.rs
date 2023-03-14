@@ -3,7 +3,7 @@
 fn text_writeable_impl_derive_simple() {
     use binbuf::prelude::*;
 
-    #[derive(Write)]
+    #[derive(Writeable)]
     struct Data {
         inner: u16,
     }
@@ -26,7 +26,7 @@ fn text_writeable_impl_derive_more_fields() {
     use binbuf::prelude::*;
     use std::net::Ipv4Addr;
 
-    #[derive(Write)]
+    #[derive(Writeable)]
     struct Data {
         v1: u16,
         v2: u16,
@@ -54,12 +54,12 @@ fn text_writeable_impl_derive_more_fields() {
 fn test_writeable_impl_derive_nested() {
     use binbuf::prelude::*;
 
-    #[derive(Write)]
+    #[derive(Writeable)]
     struct Data {
         nested: Nested,
     }
 
-    #[derive(Write)]
+    #[derive(Writeable)]
     struct Nested {
         v1: u16,
         v2: u16,

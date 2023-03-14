@@ -3,7 +3,7 @@
 fn test_readable_derive_simple() {
     use binbuf::prelude::*;
 
-    #[derive(Read)]
+    #[derive(Readable)]
     struct Data {
         inner: u16,
     }
@@ -20,7 +20,7 @@ fn test_readable_derive_simple() {
 fn test_readable_derive_three_fields() {
     use binbuf::prelude::*;
 
-    #[derive(Read)]
+    #[derive(Readable)]
     struct Data {
         v1: u16,
         v2: u32,
@@ -42,7 +42,7 @@ fn test_readable_derive_ipaddr() {
     use binbuf::prelude::*;
     use std::net::Ipv4Addr;
 
-    #[derive(Read)]
+    #[derive(Readable)]
     struct Data {
         v1: u16,
         v2: u16,
@@ -65,7 +65,7 @@ fn test_readable_derive_ipaddr() {
 fn test_readable_derive_overflow() {
     use binbuf::prelude::*;
 
-    #[derive(Read)]
+    #[derive(Readable)]
     struct Data {
         v1: u64,
         v2: u16,
@@ -82,12 +82,12 @@ fn test_readable_derive_overflow() {
 fn test_readable_derive_nested() {
     use binbuf::prelude::*;
 
-    #[derive(Read)]
+    #[derive(Readable)]
     struct Data {
         nested: Nested,
     }
 
-    #[derive(Read)]
+    #[derive(Readable)]
     struct Nested {
         v1: u16,
         v2: u16,
@@ -107,7 +107,7 @@ fn test_readable_derive_nested() {
 fn test_readable_derive_struct_attrs_error() {
     use binbuf::prelude::*;
 
-    #[derive(Read, Debug, PartialEq)]
+    #[derive(Readable, Debug, PartialEq)]
     #[binbuf(error = "BufferError")]
     struct Data {
         v1: u64,
@@ -126,7 +126,7 @@ fn test_readable_derive_struct_attrs_error() {
 fn test_readable_derive_struct_attrs_endianness() {
     use binbuf::prelude::*;
 
-    #[derive(Read, Debug, PartialEq)]
+    #[derive(Readable, Debug, PartialEq)]
     #[binbuf(endianness = "little")]
     struct Data {
         v1: u16,
