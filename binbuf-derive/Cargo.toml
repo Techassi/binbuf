@@ -1,7 +1,15 @@
 [package]
 name = "binbuf-derive"
 version = "0.0.1"
+authors = ["Techassi <git@techassi.dev>"]
+categories = ["encoding", "parsing", "network-programming"]
+description = "Automatically implement binbuf traits with derive macros"
+documentation = "https://docs.rs/binbuf_derive"
 edition = "2021"
+keywords = ["binary", "numbers", "network"]
+license = "MIT"
+repository = "https://github.com/Techassi/binbuf"
+homepage = "https://github.com/Techassi/binbuf"
 
 [lib]
 proc-macro = true
