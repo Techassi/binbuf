@@ -195,7 +195,12 @@ impl WriteBuffer {
 
     /// Returns the content of [`WriteBuffer`] as a slice of bytes.
     pub fn bytes(&self) -> &[u8] {
-        return self.buf.as_slice();
+        self.buf.as_slice()
+    }
+
+    /// Returns the content [`WriteBuffer`] as an owned vector of bytes.
+    pub fn owned_bytes(&self) -> Vec<u8> {
+        self.buf.clone()
     }
 }
 
