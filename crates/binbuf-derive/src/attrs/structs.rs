@@ -41,6 +41,7 @@ impl TryFromAttrs<RawContainerAttrs> for StructReadAttrs {
     }
 }
 
+#[derive(Debug)]
 pub struct FieldAttrs {
     pub skip_write: LitBool,
     pub skip_read: LitBool,

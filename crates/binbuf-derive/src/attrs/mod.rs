@@ -1,6 +1,6 @@
 use proc_macro2::Span;
 use structmeta::StructMeta;
-use syn::{parse::Parse, spanned::Spanned, Attribute, Error, LitBool, LitStr};
+use syn::{parse::Parse, spanned::Spanned, Attribute, Error, LitBool, LitInt, LitStr};
 
 mod enums;
 mod structs;
@@ -49,6 +49,7 @@ pub struct RawFieldAttrs {
     skip_write: Option<LitBool>,
     skip_read: Option<LitBool>,
     skip: Option<LitBool>,
+    // order: Option<LitInt>,
 }
 
 impl AttrsParse for RawFieldAttrs {}

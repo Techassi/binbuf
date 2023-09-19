@@ -1,9 +1,5 @@
 [workspace]
-members = [
-  ".",
-  "binbuf-derive",
-  "binbuf-macros"
-]
+members = [".", "crates/*"]
 
 [package]
 name = "binbuf"
@@ -17,12 +13,7 @@ keywords = ["binary", "numbers", "network"]
 license = "MIT"
 repository = "https://github.com/Techassi/binbuf"
 homepage = "https://github.com/Techassi/binbuf"
-exclude = [
-  "tests/**/*",
-  ".github/*",
-  ".vscode/*",
-  ".gitignore"
-]
+exclude = ["tests/**/*", ".github/*", ".vscode/*", ".gitignore", "docs/**/*"]
 
 [features]
 full = ["derive", "macros"]
@@ -30,6 +21,6 @@ derive = []
 macros = []
 
 [dependencies]
-binbuf-derive = { path = "binbuf-derive", version = "0.0.1" }
-binbuf-macros = { path = "binbuf-macros", version = "0.0.1" }
+binbuf-derive = { path = "crates/binbuf-derive", version = "0.0.1" }
+binbuf-macros = { path = "crates/binbuf-macros", version = "0.0.1" }
 thiserror = "1.0.38"

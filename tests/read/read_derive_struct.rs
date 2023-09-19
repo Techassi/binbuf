@@ -144,3 +144,16 @@ fn test_readable_derive_struct_attrs_endianness() {
         ))
     );
 }
+
+#[cfg(feature = "derive")]
+#[test]
+fn test_readable_derive_struct_field_attrs() {
+    use binbuf::prelude::*;
+
+    #[derive(Readable, Debug, PartialEq)]
+    struct Data {
+        #[binbuf(skip_read = true)]
+        v1: u16,
+        v2: u16,
+    }
+}

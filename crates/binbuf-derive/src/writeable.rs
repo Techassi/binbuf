@@ -2,7 +2,10 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{punctuated::Punctuated, token::Comma, DeriveInput, Error, Field, Result};
 
-use crate::shared;
+use crate::{
+    attrs::{AttrsParse, FieldAttrs, RawFieldAttrs},
+    shared,
+};
 
 pub fn expand(input: DeriveInput) -> Result<TokenStream> {
     let struct_name = &input.ident;
@@ -90,6 +93,13 @@ fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> Result<TokenStream> 
     let mut funcs: Vec<TokenStream> = Vec::new();
 
     for field in fields {
+        // Extract field attrs
+        let attrs = RawFieldAttrs::parse::<FieldAttrs>(field.attrs.clone())?;
+
+        if attrs.skip_write.value {
+            continue;
+        }
+
         let field_name = field.ident.as_ref().unwrap();
         funcs.push(shared::gen_multi_write_func(field_name));
     }

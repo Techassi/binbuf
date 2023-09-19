@@ -9,6 +9,12 @@ pub fn gen_read_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
     }
 }
 
+pub fn gen_default_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
+    quote! {
+        let #var_name = <#field_type as ::std::default::Default>::default();
+    }
+}
+
 /// This generates the Readable trait impl.
 pub fn gen_readable_impl(
     struct_name: &Ident,

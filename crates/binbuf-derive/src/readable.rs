@@ -50,16 +50,9 @@ fn expand_struct(
     let struct_attrs = RawContainerAttrs::parse::<StructReadAttrs>(struct_attrs)?;
 
     // TODO (Techassi): Make this always a loop to simplify field attr parsing
-    let read_inner: TokenStream = if named_fields.len() == 1 {
-        match gen_one_field(named_fields.first().unwrap()) {
-            Ok(ts) => ts,
-            Err(err) => return Err(err),
-        }
-    } else {
-        match gen_multiple_fields(named_fields) {
-            Ok(ts) => ts,
-            Err(err) => return Err(err),
-        }
+    let read_inner = match gen_struct_fields(named_fields) {
+        Ok(ts) => ts,
+        Err(err) => return Err(err),
     };
 
     // Validate the struct args
@@ -204,46 +197,17 @@ fn gen_from_enum_impl_repr(
     })
 }
 
-/// This generates code when there is only one named field in the struct.
-fn gen_one_field(field: &Field) -> SynResult<TokenStream> {
-    // Extract field attrs
-    let attrs = RawFieldAttrs::parse::<FieldAttrs>(field.attrs.clone())?;
-
-    // Extract the field name
-    let field_name = field.ident.as_ref().unwrap();
-
-    // Extract the field type
-    let field_type = match shared::extract_last_path_segment_ident(&field.ty) {
-        Some(t) => t,
-        None => {
-            return Err(Error::new(
-                Span::call_site(),
-                "Failed to extract ident from field type",
-            ))
-        }
-    };
-
-    // Construct the variable name
-    let var_name = format_ident!("_gen_{}", field_name);
-    let func = shared::gen_read_func(&var_name, &field_type);
-
-    Ok(quote! {
-        #func
-
-        return Ok(Self {
-            #field_name: #var_name,
-        })
-    })
-}
-
 /// This generates code when there are multiple named fields in the struct.
-fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> SynResult<TokenStream> {
+fn gen_struct_fields(fields: Punctuated<Field, Comma>) -> SynResult<TokenStream> {
     // Here we need ensure the ReadableMulti trait is implemented, how can we achieve that?
     // For now, we just generate a read call for each of the fields
     let mut funcs: Vec<TokenStream> = Vec::new();
     let mut inner: Vec<TokenStream> = Vec::new();
 
     for field in fields {
+        // Extract field attrs
+        let attrs = RawFieldAttrs::parse::<FieldAttrs>(field.attrs.clone())?;
+
         let field_name = field.ident.as_ref().unwrap();
         let var_name = format_ident!("_gen_{}", field_name);
 
@@ -257,7 +221,12 @@ fn gen_multiple_fields(fields: Punctuated<Field, Comma>) -> SynResult<TokenStrea
             }
         };
 
-        let func = shared::gen_read_func(&var_name, &field_type);
+        // Either generate a read function, or use default when skip_read=true
+        let func = if attrs.skip_read.value {
+            shared::gen_default_func(&var_name, &field_type)
+        } else {
+            shared::gen_read_func(&var_name, &field_type)
+        };
 
         funcs.push(func);
         inner.push(quote! {
