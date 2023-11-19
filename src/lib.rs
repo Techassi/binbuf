@@ -1,3 +1,32 @@
+//! A small yet powerfull library to work with binary (network) data in Rust.
+//! The library makes the proccess of writing and reading data of network
+//! protocols easy. It has out-of-the-box support for various `std` types,
+//! like all unsigned integers as well as `Ipv4Addr` and `Ipv6Addr` in big and
+//! little endian byte order.
+//!
+//! # A Tour of binbuf
+//!
+//! binbuf consists of a number of modules that provide functionality to read
+//! and write data, as well as handling of errors which can occur during these
+//! actions. The easiest way to get started is to enable all features. Do this
+//! by enabling the full feature flag:
+//!
+//! ```toml
+//! binbuf = { version = "0.0.1", features = ["full"] }
+//! ```
+//!
+//! ## Reading Simple Data Types
+//!
+//! ```rust
+//! let b = &[69, 88, 65, 77, 80, 76, 69, 33];
+//! let mut b = ReadBuffer::new(b);
+//!
+//! match u16::read::<BigEndian>(&mut b) {
+//!     Ok(n) => assert_eq!(n, 17752),
+//!     Err(err) => panic!("{}", err),
+//! }
+//! ```
+
 use std::fmt::Display;
 
 use crate::{
