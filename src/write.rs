@@ -166,38 +166,52 @@ impl Buffer {
         len
     }
 
-    /// Writes a character string to the [`WriteBuffer`]. This will push the
-    /// length of the string as a single byte. The contents of the string
-    /// will be added after this length byte. If the length of the character
-    /// string is larger than [`u8::MAX`], the function returns the error
-    /// [`BufferError::MaxLengthOverflow`].
+    /// Writes a character string to the [`Buffer`]. This will first write the
+    /// length of the string as a sequence of bytes which is followed by the
+    /// actual string contents.
+    ///
+    /// If the length of the character string is larger than [`L::MAX`], the
+    /// function returns the error [`Error::LengthLabelOverflow`]. If the
+    /// length of the string exceeds the optional `max_len`, the function
+    /// returns [`Error::MaxLengthOverflow`].
+    ///
+    /// It is possible to write character strings, which exceeds the length of
+    /// [`u8::MAX`][u8max]. Most network protocols however only allow character
+    /// strings with a max size of [`u8::MAX`][u8max] at most. DNS being one
+    /// prominent example. The length label is currently **only** writen using
+    /// big endian byte order.
+    ///
+    /// [u8max]: https://doc.rust-lang.org/std/primitive.u8.html#associatedconstant.MAX
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new();
+    /// let mut b = Buffer::new();
     /// b.write_char_string(&[88, 65, 77, 80], None).unwrap();
     ///
     /// assert_eq!(b.len(), 5);
     /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
     /// ```
-    pub fn write_char_string(&mut self, s: &[u8], max_len: Option<u8>) -> WriteBufferResult {
+    pub fn write_char_string<L>(&mut self, s: impl AsRef<[u8]>, max_len: Option<L>) -> Result
+    where
+        L: num::Unsigned + num::Bounded + Into<usize>,
+    {
+        let s = s.as_ref();
         let len = s.len();
 
-        if len > u8::MAX as usize {
-            return Err(BufferError::MaxLengthOverflow);
-        }
+        // Ensure that the length label of the string doesn't exceed the maximum
+        // value which can be encoded using a u8.
+        ensure!(len <= L::max_value().into(), LengthLabelOverflowSnafu);
 
+        // Ensure length is smaller than max_len
         if let Some(max_len) = max_len {
-            if len > max_len.into() {
-                return Err(BufferError::MaxLengthOverflow);
-            }
+            ensure!(len <= max_len.into(), MaxLengthOverflowSnafu);
         }
 
-        self.push(len as u8);
-        Ok(self.write(s) + 1)
+        let n = len.write_be(self)?;
+        Ok(self.write(s) + n)
     }
 
     pub fn enter(&mut self) {
