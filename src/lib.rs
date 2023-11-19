@@ -74,20 +74,8 @@ impl Endianness for LittleEndian {
     }
 }
 
-pub mod prelude {
-    pub use crate::{
-        error::BufferError,
-        read::{
-            ReadBuffer, ReadBufferResult, Readable, ReadableMulti, ReadableMultiVerify,
-            ReadableVerify,
-        },
-        write::{WriteBuffer, WriteBufferResult, Writeable},
-        BigEndian, Endianness, LittleEndian, SupportedEndianness,
-    };
+#[cfg(feature = "derive")]
+pub use binbuf_derive::{Readable, Writeable};
 
-    #[cfg(feature = "derive")]
-    pub use binbuf_derive::{Readable, Writeable};
-
-    #[cfg(feature = "macros")]
-    pub use binbuf_macros::bytes_written;
-}
+#[cfg(feature = "macros")]
+pub use binbuf_macros::bytes_written;
