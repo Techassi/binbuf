@@ -5,7 +5,6 @@ use crate::{
     write::{IntoBuffer, WriteBuffer},
 };
 
-pub mod error;
 pub mod read;
 pub mod write;
 
