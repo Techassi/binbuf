@@ -1,30 +1,48 @@
 use binbuf_macros::from_buffer_and_readable_impl;
+use snafu::{ensure, OptionExt, Snafu};
 
-use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEndianness};
+use crate::{BigEndian, Endianness, LittleEndian, SupportedEndianness};
 
-pub type ReadBufferResult<T> = Result<T, BufferError>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    /// This error indicates that the buffer is too short to read the
+    /// requested amount of bytes.
+    #[snafu(display("buffer too short"))]
+    BufferTooShort,
+
+    #[snafu(display("invalid jump, jumping to {index} beyond offset {offset} is not permitted"))]
+    InvalidJump { index: usize, offset: usize },
+
+    #[snafu(display("max buffer length overflow"))]
+    MaxLengthOverflow,
+
+    #[snafu(display("unsupported endianness, only supports: {support}"))]
+    UnsupportedEndianness { support: SupportedEndianness },
+}
 
 #[derive(Debug)]
-pub struct ReadBuffer<'a> {
+pub struct Buffer<'a> {
     jump_indices: Vec<usize>,
     buf: &'a [u8],
     rest: &'a [u8],
 }
 
-impl<'a> ReadBuffer<'a> {
+impl<'a> Buffer<'a> {
     /// Create a new [`ReadBuffer`] based on a slice of `u8`s.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::{Buffer, Error};
     ///
-    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let b = ReadBuffer::new(d.as_slice());
+    /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
+    /// let b = Buffer::new(d);
     /// assert_eq!(b.len(), 8);
     /// ```
     pub fn new(buf: &'a [u8]) -> Self {
-        ReadBuffer {
+        Buffer {
             buf,
             rest: buf,
             jump_indices: Vec::new(),
@@ -37,28 +55,26 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::{Buffer, Error};
     ///
-    /// let d = vec![69, 88];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Buffer::new(&[69, 88]);
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.pop(), Ok(88));
-    /// assert_eq!(b.pop(), Err(BufferError::BufferTooShort));
+    /// assert_eq!(b.pop(), Err(Error::BufferTooShort));
     /// ```
-    pub fn pop(&mut self) -> ReadBufferResult<u8> {
+    pub fn pop(&mut self) -> Result<u8> {
         if let Some((first, rest)) = self.rest.split_first() {
             self.rest = rest;
             return Ok(*first);
         }
 
-        Err(BufferError::BufferTooShort)
+        BufferTooShortSnafu.fail()
     }
 
-    /// Pop off a byte from the front of the buffer but do not return the
-    /// popped off byte. This is rarely useful other than in combination with
-    /// `peek()`.
-    pub fn skip(&mut self) -> ReadBufferResult<()> {
+    /// Pop off a byte from the front of the buffer without returning the byte.
+    /// This is rarely useful other than in combination with [`ReadBuffer::peek()`].
+    pub fn skip(&mut self) -> Result<()> {
         self.pop()?;
         Ok(())
     }
@@ -70,10 +86,9 @@ impl<'a> ReadBuffer<'a> {
     /// Pop off `n` bytes from the front of the buffer but do not return the
     /// popped off bytes. This is rarely useful other than in combination with
     /// `peekn()`.
-    pub fn skipn(&mut self, n: usize) -> ReadBufferResult<()> {
-        if n > self.len() {
-            return Err(BufferError::BufferTooShort);
-        }
+    pub fn skipn(&mut self, n: usize) -> Result<()> {
+        // Ensure the buffer is long enough to skip n bytes.
+        ensure!(n <= self.len(), BufferTooShortSnafu);
 
         if n == 1 {
             return self.skip();
@@ -91,10 +106,9 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Buffer::new(&[69]);
     ///
     /// assert_eq!(b.peek(), Some(69));
     /// assert_eq!(b.pop(), Ok(69));
@@ -110,10 +124,9 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69, 88];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Buffer::new(&[69, 88]);
     ///
     /// assert_eq!(b.peekn::<2>(), Some([69, 88]));
     /// assert_eq!(b.skipn(2), Ok(()));
@@ -130,11 +143,16 @@ impl<'a> ReadBuffer<'a> {
     }
 
     /// Jumps back to offset `index`. Jumping beyond the current offset is not
-    /// permitted and returns [`BufferError::InvalidJumpIndex`].
-    pub fn jump_to(&mut self, index: usize) -> ReadBufferResult<()> {
-        if index > self.offset() {
-            return Err(BufferError::InvalidJumpIndex);
-        }
+    /// permitted and returns [`Error::InvalidJump`].
+    pub fn jump_to(&mut self, index: usize) -> Result<()> {
+        // Ensure we don't jump to ann index larger than the currennt offset.
+        ensure!(
+            index <= self.offset(),
+            InvalidJumpSnafu {
+                index,
+                offset: self.offset()
+            }
+        );
 
         self.jump_indices.push(self.offset());
         self.rest = &self.buf[index..];
@@ -172,10 +190,9 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69, 88];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Buffer::new(&[69, 88]);
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.offset(), 1);
@@ -184,15 +201,14 @@ impl<'a> ReadBuffer<'a> {
         self.buf.len() - self.rest.len()
     }
 
-    /// Returns the len of the remaining buffer.
+    /// Returns the length of the remaining buffer.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69, 88];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Buffer::new(&[69, 88]);
     ///
     /// assert_eq!(b.len(), 2);
     /// assert_eq!(b.pop(), Ok(69));
@@ -207,10 +223,9 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Buffer::new(&[69]);
     ///
     /// assert_eq!(b.is_empty(), false);
     /// assert_eq!(b.pop(), Ok(69));
@@ -236,36 +251,31 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![4, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let d = &[4, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = Buffer::new(d);
     ///
-    /// assert_eq!(b.read_char_string(None), Ok([88, 65, 77, 80].as_slice()));
+    /// assert_eq!(b.read_char_string(None), Ok(&[88, 65, 77, 80]));
     /// assert_eq!(b.len(), 3);
     /// ```
     ///
     /// ### Example with a maximum length
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::{Buffer, Error};
     ///
-    /// let d = vec![4, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let d = &[4, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = Buffer::new(d);
     ///
-    /// assert_eq!(b.read_char_string(Some(3)), Err(BufferError::MaxLengthOverflow));
+    /// assert_eq!(b.read_char_string(Some(3)), Err(Error::MaxLengthOverflow));
     /// assert_eq!(b.len(), 8);
     /// ```
-    pub fn read_char_string(&mut self, max_len: Option<u8>) -> ReadBufferResult<&[u8]> {
-        let len = match self.peek() {
-            Some(len) => len as usize,
-            None => return Err(BufferError::BufferTooShort),
-        };
+    pub fn read_char_string(&mut self, max_len: Option<u8>) -> Result<&[u8]> {
+        let len = self.peek().context(BufferTooShortSnafu)? as usize;
 
         if let Some(max_len) = max_len {
-            if len > max_len.into() {
-                return Err(BufferError::MaxLengthOverflow);
-            }
+            ensure!(len <= max_len.into(), MaxLengthOverflowSnafu);
         }
 
         self.skip()?;
@@ -279,18 +289,16 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = Buffer::new(d);
     ///
-    /// assert_eq!(b.read_slice(4), Ok([69, 88, 65, 77].as_slice()));
+    /// assert_eq!(b.read_slice(4), Ok(&[69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
     /// ```
-    pub fn read_slice(&mut self, nbytes: usize) -> ReadBufferResult<&[u8]> {
-        if nbytes > self.len() {
-            return Err(BufferError::BufferTooShort);
-        }
+    pub fn read_slice(&mut self, nbytes: usize) -> Result<&[u8]> {
+        ensure!(nbytes <= self.len(), BufferTooShortSnafu);
 
         let (slice, rest) = self.rest.split_at(nbytes);
         self.rest = rest;
@@ -303,15 +311,15 @@ impl<'a> ReadBuffer<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::read::Buffer;
     ///
-    /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
+    /// let mut b = Buffer::new(d);
     ///
     /// assert_eq!(b.read_vec(4), Ok(vec![69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
     /// ```
-    pub fn read_vec(&mut self, nbytes: usize) -> ReadBufferResult<Vec<u8>> {
+    pub fn read_vec(&mut self, nbytes: usize) -> Result<Vec<u8>> {
         self.read_slice(nbytes).map(ToOwned::to_owned)
     }
 }
@@ -319,8 +327,8 @@ impl<'a> ReadBuffer<'a> {
 pub trait FromBuffer: Sized {
     const SIZE: usize;
 
-    fn as_be(buf: &mut ReadBuffer) -> ReadBufferResult<Self>;
-    fn as_le(buf: &mut ReadBuffer) -> ReadBufferResult<Self>;
+    fn as_be(buf: &mut Buffer) -> Result<Self>;
+    fn as_le(buf: &mut Buffer) -> Result<Self>;
 }
 
 /// All types which implement this trait can be constructed by reading from
@@ -330,14 +338,15 @@ pub trait FromBuffer: Sized {
 /// ### Example
 ///
 /// ```
-/// use binbuf::prelude::*;
+/// use binbuf::{BigEndian, read::{Buffer, Readable}};
 ///
-/// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let mut b = ReadBuffer::new(d.as_slice());
+/// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
+/// let mut b = Buffer::new(d);
+///
 /// assert_eq!(u16::read::<BigEndian>(&mut b), Ok(17752));
 /// ```
 pub trait Readable: Sized {
-    type Error: std::error::Error + std::fmt::Display + From<BufferError>;
+    type Error: std::error::Error + std::fmt::Display + From<Error>;
 
     /// Read [`Self`] from a [`ReadBuffer`].
     ///
@@ -352,7 +361,7 @@ pub trait Readable: Sized {
     /// let i = u16::read::<BigEndian>(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error>;
+    fn read<E: Endianness>(buf: &mut Buffer) -> Result<Self, Self::Error>;
 
     /// Read [`Self`] with big endian encoding from a [`ReadBuffer`].
     /// Internally this calls `Self::read::<BigEndian>()`.
@@ -368,7 +377,7 @@ pub trait Readable: Sized {
     /// let i = u16::read_be(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read_be(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_be(buf: &mut Buffer) -> Result<Self, Self::Error> {
         Self::read::<BigEndian>(buf)
     }
 
@@ -386,7 +395,7 @@ pub trait Readable: Sized {
     /// let i = u16::read_le(&mut b).unwrap();
     /// assert_eq!(i, 22597);
     /// ```
-    fn read_le(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_le(buf: &mut Buffer) -> Result<Self, Self::Error> {
         Self::read::<LittleEndian>(buf)
     }
 }
@@ -428,7 +437,7 @@ pub trait ReadableVerify: Readable {
     /// let le = u16::read_verify::<LittleEndian>(&mut b).unwrap();
     /// assert_eq!(le, 22597);
     /// ```
-    fn read_verify<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_verify<E: Endianness>(buf: &mut Buffer) -> Result<Self, Self::Error> {
         Self::supports::<E>()?;
         Self::read::<E>(buf)
     }
@@ -436,26 +445,27 @@ pub trait ReadableVerify: Readable {
     /// Read [`Self`] from a [`ReadBuffer`]. This will fail and return an error
     /// if the type does not support the big endian encoding. Internally this
     /// calls `Self::read_verify::<BigEndian>()`.
-    fn read_verify_be(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_verify_be(buf: &mut Buffer) -> Result<Self, Self::Error> {
         Self::read_verify::<BigEndian>(buf)
     }
 
     /// Read [`Self`] from a [`ReadBuffer`]. This will fail and return an error
     /// if the type does not support the little endian encoding. Internally
     /// this calls `Self::read_verify::<LittleEndian>()`.
-    fn read_verify_le(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_verify_le(buf: &mut Buffer) -> Result<Self, Self::Error> {
         Self::read_verify::<LittleEndian>(buf)
     }
 
     /// Returns if this type [`Self`] supports the requested endianness
     /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
     /// returned.
-    fn supports<E: Endianness>() -> ReadBufferResult<()> {
-        if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
-            return Err(BufferError::UnsupportedEndianness(
-                Self::SUPPORTED_ENDIANNESS,
-            ));
-        }
+    fn supports<E: Endianness>() -> Result<()> {
+        ensure!(
+            E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS),
+            UnsupportedEndiannessSnafu {
+                support: Self::SUPPORTED_ENDIANNESS
+            }
+        );
 
         Ok(())
     }
@@ -497,7 +507,7 @@ pub trait ReadableMulti: Readable + Default + Copy {
     /// assert_eq!(i4, 17697);
     /// ```
     fn read_multi<E: Endianness, const S: usize>(
-        buf: &mut ReadBuffer,
+        buf: &mut Buffer,
     ) -> Result<[Self; S], Self::Error> {
         let mut a = [Self::default(); S];
 
@@ -508,32 +518,28 @@ pub trait ReadableMulti: Readable + Default + Copy {
         Ok(a)
     }
 
-    fn read_multi_be<const S: usize>(buf: &mut ReadBuffer) -> Result<[Self; S], Self::Error> {
+    fn read_multi_be<const S: usize>(buf: &mut Buffer) -> Result<[Self; S], Self::Error> {
         Self::read_multi::<BigEndian, S>(buf)
     }
 
-    fn read_multi_le<const S: usize>(buf: &mut ReadBuffer) -> Result<[Self; S], Self::Error> {
+    fn read_multi_le<const S: usize>(buf: &mut Buffer) -> Result<[Self; S], Self::Error> {
         Self::read_multi::<LittleEndian, S>(buf)
     }
 }
 
 pub trait ReadableMultiVerify: ReadableMulti + ReadableVerify {
     fn read_multi_verify<E: Endianness, const S: usize>(
-        buf: &mut ReadBuffer,
+        buf: &mut Buffer,
     ) -> Result<[Self; S], Self::Error> {
         Self::supports::<E>()?;
         Self::read_multi::<E, S>(buf)
     }
 
-    fn read_multi_verify_be<const S: usize>(
-        buf: &mut ReadBuffer,
-    ) -> Result<[Self; S], Self::Error> {
+    fn read_multi_verify_be<const S: usize>(buf: &mut Buffer) -> Result<[Self; S], Self::Error> {
         Self::read_multi_verify::<BigEndian, S>(buf)
     }
 
-    fn read_multi_verify_le<const S: usize>(
-        buf: &mut ReadBuffer,
-    ) -> Result<[Self; S], Self::Error> {
+    fn read_multi_verify_le<const S: usize>(buf: &mut Buffer) -> Result<[Self; S], Self::Error> {
         Self::read_multi_verify::<LittleEndian, S>(buf)
     }
 }

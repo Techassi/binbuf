@@ -1,17 +1,17 @@
-use binbuf::prelude::*;
+use binbuf::read::*;
 
 #[test]
 fn test_new_read_buffer() {
-    let data = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let buf = ReadBuffer::new(data.as_slice());
+    let data = &[69, 88, 65, 77, 80, 76, 69, 33];
+    let buf = Buffer::new(data);
 
     assert_eq!(buf.len(), 8);
 }
 
 #[test]
 fn test_read_buffer_reset() {
-    let data = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(data.as_slice());
+    let data = &[69, 88, 65, 77, 80, 76, 69, 33];
+    let mut buf = Buffer::new(data);
 
     assert_eq!(buf.len(), 8);
 
@@ -24,8 +24,8 @@ fn test_read_buffer_reset() {
 
 #[test]
 fn test_read_buffer_jump() {
-    let data = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(data.as_slice());
+    let data = &[69, 88, 65, 77, 80, 76, 69, 33];
+    let mut buf = Buffer::new(data);
 
     buf.read_vec(4).unwrap();
     assert_eq!(buf.offset(), 4);

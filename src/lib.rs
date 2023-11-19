@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
 use crate::{
-    read::{FromBuffer, ReadBuffer, ReadBufferResult},
-    write::{IntoBuffer, WriteBuffer},
+    read::{FromBuffer, Result},
+    write::IntoBuffer,
 };
 
 pub mod read;
@@ -30,8 +30,8 @@ impl Display for SupportedEndianness {
 pub trait Endianness {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T>;
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize;
+    fn read<T: FromBuffer>(buf: &mut read::Buffer) -> Result<T>;
+    fn write<T: IntoBuffer>(n: T, buf: &mut write::Buffer) -> usize;
 }
 
 #[derive(Debug)]
@@ -45,11 +45,11 @@ impl Endianness for BigEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T> {
+    fn read<T: FromBuffer>(buf: &mut read::Buffer) -> Result<T> {
         T::as_be(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize {
+    fn write<T: IntoBuffer>(n: T, buf: &mut write::Buffer) -> usize {
         n.as_be(buf)
     }
 }
@@ -65,11 +65,11 @@ impl Endianness for LittleEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadBufferResult<T> {
+    fn read<T: FromBuffer>(buf: &mut read::Buffer) -> Result<T> {
         T::as_le(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize {
+    fn write<T: IntoBuffer>(n: T, buf: &mut write::Buffer) -> usize {
         n.as_le(buf)
     }
 }

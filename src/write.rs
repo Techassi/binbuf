@@ -1,26 +1,44 @@
 use std::collections::HashMap;
 
 use binbuf_macros::into_buffer_and_writeable_impl;
+use snafu::{ensure, Snafu};
 
-use crate::{error::BufferError, BigEndian, Endianness, LittleEndian, SupportedEndianness};
+use crate::{BigEndian, Endianness, LittleEndian, SupportedEndianness};
 
-pub type WriteBufferResult = Result<usize, BufferError>;
+pub type Result<T = usize, E = Error> = std::result::Result<T, E>;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display(
+        "the length of the character string oveflows the max value encodable using an u8"
+    ))]
+    LengthLabelOverflow,
+
+    #[snafu(display("max buffer length overflow"))]
+    MaxLengthOverflow,
+
+    #[snafu(display("unsupported endianness, only supports: {support}"))]
+    UnsupportedEndianness { support: SupportedEndianness },
+
+    #[snafu(display("non-ascii string data cannot be written"))]
+    NonAsciiData,
+}
 
 #[derive(Debug, Default)]
-pub struct WriteBuffer {
+pub struct Buffer {
     spans: Vec<usize>,
     buf: Vec<u8>,
 }
 
-impl WriteBuffer {
-    /// Creates a new empty [`WriteBuffer`] backed by a `Vec<u8>`.
+impl Buffer {
+    /// Creates a new empty [`Buffer`] backed by a `Vec<u8>`.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new();
+    /// let mut b = Buffer::new();
     /// 17752u16.write::<BigEndian>(&mut b).unwrap();
     ///
     /// assert_eq!(b.len(), 2);
@@ -30,15 +48,16 @@ impl WriteBuffer {
         Self::default()
     }
 
-    /// Creates a new [`WriteBuffer`] backed by a `Vec<u8>` with the provided
-    /// bytes already in the buffer.
+    /// Creates a new [`Buffer`] backed by a `Vec<u8>` with the provided bytes
+    /// already in the buffer. Possible parameters are: `Vec<u8>`, `&[u8]`, and
+    /// `[u8]`.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new_with([69, 88]);
+    /// let mut b = Buffer::new_with([69, 88]);
     /// assert_eq!(b.bytes(), &[69, 88]);
     /// ```
     pub fn new_with<T: AsRef<[u8]>>(b: T) -> Self {
@@ -52,14 +71,14 @@ impl WriteBuffer {
         buf
     }
 
-    /// Adds a new byte to the end of the [`WriteBuffer`].
+    /// Adds a new byte to the end of the [`Buffer`].
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new();
+    /// let mut b = Buffer::new();
     /// b.push(69);
     ///
     /// assert_eq!(b.len(), 1);
@@ -73,14 +92,14 @@ impl WriteBuffer {
         }
     }
 
-    /// Clears the [`WriteBuffer`], removing all bytes.
+    /// Clears the [`Buffer`], removing all bytes.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new_with([69, 88]);
+    /// let mut b = Buffer::new_with([69, 88]);
     /// b.clear();
     ///
     /// assert_eq!(b.len(), 0);
@@ -89,28 +108,28 @@ impl WriteBuffer {
         self.buf.clear()
     }
 
-    /// Returns the length of the [`WriteBuffer`].
+    /// Returns the length of the [`Buffer`].
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new_with([69, 88]);
+    /// let mut b = Buffer::new_with([69, 88]);
     /// assert_eq!(b.len(), 2);
     /// ```
     pub fn len(&self) -> usize {
         self.buf.len()
     }
 
-    /// Returns if the [`WriteBuffer`] is empty.
+    /// Returns if the [`Buffer`] is empty.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new();
+    /// let mut b = Buffer::new();
     /// assert_eq!(b.is_empty(), true);
     ///
     /// b.push(69);
@@ -120,21 +139,21 @@ impl WriteBuffer {
         self.buf.is_empty()
     }
 
-    /// Writes multiple bytes of data to the [`WriteBuffer`]. Possible
+    /// Writes multiple bytes of data to the [`Buffer`]. Possible
     /// parameters are: `Vec<u8>`, `&[u8]`, and `[u8]`.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::write::Buffer;
     ///
-    /// let mut b = WriteBuffer::new();
+    /// let mut b = Buffer::new();
     /// b.write(vec![69, 88, 65]);
     ///
     /// assert_eq!(b.len(), 3);
     /// assert_eq!(b.bytes(), &[69, 88, 65]);
     /// ```
-    pub fn write<T: AsRef<[u8]>>(&mut self, b: T) -> usize {
+    pub fn write(&mut self, b: impl AsRef<[u8]>) -> usize {
         let bytes = b.as_ref();
         let len = bytes.len();
 
@@ -207,20 +226,20 @@ impl WriteBuffer {
 pub trait IntoBuffer: Sized {
     const SIZE: usize;
 
-    fn as_be(&self, buf: &mut WriteBuffer) -> usize;
-    fn as_le(&self, buf: &mut WriteBuffer) -> usize;
+    fn as_be(&self, buf: &mut Buffer) -> usize;
+    fn as_le(&self, buf: &mut Buffer) -> usize;
 }
 
 pub trait Writeable: Sized {
-    type Error: std::error::Error + std::fmt::Display + From<BufferError>;
+    type Error: std::error::Error + std::fmt::Display + From<Error>;
 
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error>;
+    fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error>;
 
-    fn write_be(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write_be(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         self.write::<BigEndian>(buf)
     }
 
-    fn write_le(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write_le(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         self.write::<LittleEndian>(buf)
     }
 }
@@ -228,28 +247,29 @@ pub trait Writeable: Sized {
 pub trait WriteableVerify: Writeable {
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
-    fn write_verify<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write_verify<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         Self::supports::<E>()?;
         self.write::<E>(buf)
     }
 
-    fn write_verify_be(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write_verify_be(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         self.write_verify::<BigEndian>(buf)
     }
 
-    fn write_verify_le(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write_verify_le(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         self.write_verify::<LittleEndian>(buf)
     }
 
     /// Returns if this type [`Self`] supports the requested endianness
     /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
     /// returned.
-    fn supports<E: Endianness>() -> WriteBufferResult {
-        if !E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS) {
-            return Err(BufferError::UnsupportedEndianness(
-                Self::SUPPORTED_ENDIANNESS,
-            ));
-        }
+    fn supports<E: Endianness>() -> Result {
+        ensure!(
+            E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS),
+            UnsupportedEndiannessSnafu {
+                support: Self::SUPPORTED_ENDIANNESS
+            }
+        );
 
         Ok(0)
     }
@@ -265,7 +285,7 @@ into_buffer_and_writeable_impl!(usize, (usize::BITS / 8) as usize);
 impl<T: Writeable> Writeable for Vec<T> {
     type Error = T::Error;
 
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         buf.enter();
         for item in self.iter() {
             item.write::<E>(buf)?;
@@ -281,7 +301,7 @@ impl<T: WriteableVerify> WriteableVerify for Vec<T> {
 impl<K, V: Writeable> Writeable for HashMap<K, V> {
     type Error = V::Error;
 
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
         buf.enter();
         for value in self.values() {
             value.write::<E>(buf)?;

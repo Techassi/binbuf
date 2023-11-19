@@ -1,8 +1,8 @@
-use binbuf::prelude::*;
+use binbuf::write::*;
 
 #[test]
 fn test_new_write_buffer() {
-    let mut buf = WriteBuffer::new();
+    let mut buf = Buffer::new();
     buf.push(69);
 
     assert_eq!(buf.len(), 1);
@@ -11,7 +11,7 @@ fn test_new_write_buffer() {
 
 #[test]
 fn test_write_buffer_clear() {
-    let mut buf = WriteBuffer::new();
+    let mut buf = Buffer::new();
     buf.push(69);
 
     assert_eq!(buf.len(), 1);
@@ -25,7 +25,7 @@ fn test_write_buffer_clear() {
 
 #[test]
 fn test_new_write_buffer_with() {
-    let mut buf = WriteBuffer::new_with([69, 88]);
+    let mut buf = Buffer::new_with([69, 88]);
     buf.push(65);
 
     assert_eq!(buf.len(), 3);
@@ -34,7 +34,7 @@ fn test_new_write_buffer_with() {
 
 #[test]
 fn test_write_buffer_with_clear() {
-    let mut buf = WriteBuffer::new_with([69, 88]);
+    let mut buf = Buffer::new_with([69, 88]);
     buf.push(65);
 
     assert_eq!(buf.len(), 3);

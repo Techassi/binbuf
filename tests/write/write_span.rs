@@ -1,8 +1,8 @@
-use binbuf::prelude::*;
+use binbuf::write::*;
 
 #[test]
 fn test_write_span_basic() {
-    let mut b = WriteBuffer::new();
+    let mut b = Buffer::new();
     b.enter();
 
     {
