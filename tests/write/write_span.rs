@@ -2,7 +2,7 @@ use binbuf::write::*;
 
 #[test]
 fn test_write_span_basic() {
-    let mut b = Buffer::new();
+    let mut b = WriteBuffer::new();
     b.enter();
 
     {

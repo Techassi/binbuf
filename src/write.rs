@@ -5,10 +5,10 @@ use snafu::{ensure, Snafu};
 
 use crate::{BigEndian, Endianness, LittleEndian, SupportedEndianness};
 
-pub type Result<T = usize, E = Error> = std::result::Result<T, E>;
+pub type Result<T = usize, E = WriteError> = std::result::Result<T, E>;
 
 #[derive(Debug, Snafu)]
-pub enum Error {
+pub enum WriteError {
     #[snafu(display(
         "the length of the character string oveflows the max value encodable using an u8"
     ))]
@@ -25,12 +25,12 @@ pub enum Error {
 }
 
 #[derive(Debug, Default)]
-pub struct Buffer {
+pub struct WriteBuffer {
     spans: Vec<usize>,
     buf: Vec<u8>,
 }
 
-impl Buffer {
+impl WriteBuffer {
     /// Creates a new empty [`Buffer`] backed by a `Vec<u8>`.
     ///
     /// ### Example
@@ -240,20 +240,20 @@ impl Buffer {
 pub trait IntoBuffer: Sized {
     const SIZE: usize;
 
-    fn as_be(&self, buf: &mut Buffer) -> usize;
-    fn as_le(&self, buf: &mut Buffer) -> usize;
+    fn as_be(&self, buf: &mut WriteBuffer) -> usize;
+    fn as_le(&self, buf: &mut WriteBuffer) -> usize;
 }
 
 pub trait Writeable: Sized {
-    type Error: std::error::Error + std::fmt::Display + From<Error>;
+    type Error: std::error::Error + std::fmt::Display + From<WriteError>;
 
-    fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error>;
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error>;
 
-    fn write_be(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write_be(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         self.write::<BigEndian>(buf)
     }
 
-    fn write_le(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write_le(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         self.write::<LittleEndian>(buf)
     }
 }
@@ -261,16 +261,16 @@ pub trait Writeable: Sized {
 pub trait WriteableVerify: Writeable {
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
-    fn write_verify<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write_verify<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         Self::supports::<E>()?;
         self.write::<E>(buf)
     }
 
-    fn write_verify_be(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write_verify_be(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         self.write_verify::<BigEndian>(buf)
     }
 
-    fn write_verify_le(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write_verify_le(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         self.write_verify::<LittleEndian>(buf)
     }
 
@@ -299,7 +299,7 @@ into_buffer_and_writeable_impl!(usize, (usize::BITS / 8) as usize);
 impl<T: Writeable> Writeable for Vec<T> {
     type Error = T::Error;
 
-    fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         buf.enter();
         for item in self.iter() {
             item.write::<E>(buf)?;
@@ -315,7 +315,7 @@ impl<T: WriteableVerify> WriteableVerify for Vec<T> {
 impl<K, V: Writeable> Writeable for HashMap<K, V> {
     type Error = V::Error;
 
-    fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
         buf.enter();
         for value in self.values() {
             value.write::<E>(buf)?;

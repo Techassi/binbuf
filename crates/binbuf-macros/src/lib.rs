@@ -4,20 +4,20 @@ macro_rules! from_buffer_and_readable_impl {
         impl FromBuffer for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(buf: &mut Buffer) -> Result<Self> {
+            fn as_be(buf: &mut crate::read::ReadBuffer) -> Result<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_be_bytes(b.try_into().unwrap()))
             }
 
-            fn as_le(buf: &mut Buffer) -> Result<Self> {
+            fn as_le(buf: &mut crate::read::ReadBuffer) -> Result<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_le_bytes(b.try_into().unwrap()))
             }
         }
 
         impl Readable for $SelfT {
-            type Error = Error;
-            fn read<E: Endianness>(buf: &mut Buffer) -> Result<Self, Self::Error> {
+            type Error = crate::read::ReadError;
+            fn read<E: Endianness>(buf: &mut crate::read::ReadBuffer) -> Result<Self, Self::Error> {
                 E::read(buf)
             }
         }
@@ -37,21 +37,24 @@ macro_rules! into_buffer_and_writeable_impl {
         impl IntoBuffer for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(&self, buf: &mut crate::write::Buffer) -> usize {
+            fn as_be(&self, buf: &mut crate::write::WriteBuffer) -> usize {
                 let b = self.to_be_bytes();
                 buf.write(b)
             }
 
-            fn as_le(&self, buf: &mut crate::write::Buffer) -> usize {
+            fn as_le(&self, buf: &mut crate::write::WriteBuffer) -> usize {
                 let b = self.to_le_bytes();
                 buf.write(b)
             }
         }
 
         impl Writeable for $SelfT {
-            type Error = crate::write::Error;
+            type Error = crate::write::WriteError;
 
-            fn write<E: Endianness>(&self, buf: &mut crate::write::Buffer) -> crate::write::Result {
+            fn write<E: Endianness>(
+                &self,
+                buf: &mut crate::write::WriteBuffer,
+            ) -> crate::write::Result {
                 Ok(E::write(*self, buf))
             }
         }

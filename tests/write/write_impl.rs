@@ -7,16 +7,16 @@ fn test_writeable_impl() {
     }
 
     impl Writeable for Data {
-        type Error = Error;
+        type Error = WriteError;
 
-        fn write<E: Endianness>(&self, buf: &mut Buffer) -> Result<usize, Self::Error> {
+        fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
             self.inner.write::<E>(buf)
         }
     }
 
     let d = Data { inner: 17752 };
 
-    let mut b = Buffer::new();
+    let mut b = WriteBuffer::new();
     match d.write::<BigEndian>(&mut b) {
         Ok(n) => {
             assert_eq!(n, 2);

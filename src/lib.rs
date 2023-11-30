@@ -59,8 +59,8 @@ impl Display for SupportedEndianness {
 pub trait Endianness {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
-    fn read<T: FromBuffer>(buf: &mut read::Buffer) -> Result<T>;
-    fn write<T: IntoBuffer>(n: T, buf: &mut write::Buffer) -> usize;
+    fn read<T: FromBuffer>(buf: &mut read::ReadBuffer) -> Result<T>;
+    fn write<T: IntoBuffer>(n: T, buf: &mut write::WriteBuffer) -> usize;
 }
 
 #[derive(Debug)]
@@ -74,11 +74,11 @@ impl Endianness for BigEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut read::Buffer) -> Result<T> {
+    fn read<T: FromBuffer>(buf: &mut read::ReadBuffer) -> Result<T> {
         T::as_be(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut write::Buffer) -> usize {
+    fn write<T: IntoBuffer>(n: T, buf: &mut write::WriteBuffer) -> usize {
         n.as_be(buf)
     }
 }
@@ -94,11 +94,11 @@ impl Endianness for LittleEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut read::Buffer) -> Result<T> {
+    fn read<T: FromBuffer>(buf: &mut read::ReadBuffer) -> Result<T> {
         T::as_le(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut write::Buffer) -> usize {
+    fn write<T: IntoBuffer>(n: T, buf: &mut write::WriteBuffer) -> usize {
         n.as_le(buf)
     }
 }
