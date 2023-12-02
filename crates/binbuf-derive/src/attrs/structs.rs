@@ -11,7 +11,7 @@ pub struct StructReadAttrs {
 impl Default for StructReadAttrs {
     fn default() -> Self {
         Self {
-            error: LitStr::new("binbuf::error::BufferError", Span::call_site()),
+            error: LitStr::new("binbuf::read::ReadError", Span::call_site()),
             endianness: LitStr::new("both", Span::call_site()),
         }
     }
