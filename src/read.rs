@@ -3,7 +3,7 @@ use snafu::{ensure, OptionExt, Snafu};
 
 use crate::{BigEndian, Endianness, LittleEndian, SupportedEndianness};
 
-pub type Result<T, E = ReadError> = std::result::Result<T, E>;
+pub type ReadResult<T, E = ReadError> = std::result::Result<T, E>;
 
 #[derive(Debug, Snafu)]
 pub enum ReadError {
@@ -63,7 +63,7 @@ impl<'a> ReadBuffer<'a> {
     /// assert_eq!(b.pop(), Ok(88));
     /// assert_eq!(b.pop(), Err(Error::BufferTooShort));
     /// ```
-    pub fn pop(&mut self) -> Result<u8> {
+    pub fn pop(&mut self) -> ReadResult<u8> {
         if let Some((first, rest)) = self.rest.split_first() {
             self.rest = rest;
             return Ok(*first);
@@ -74,7 +74,7 @@ impl<'a> ReadBuffer<'a> {
 
     /// Pop off a byte from the front of the buffer without returning the byte.
     /// This is rarely useful other than in combination with [`ReadBuffer::peek()`].
-    pub fn skip(&mut self) -> Result<()> {
+    pub fn skip(&mut self) -> ReadResult<()> {
         self.pop()?;
         Ok(())
     }
@@ -86,7 +86,7 @@ impl<'a> ReadBuffer<'a> {
     /// Pop off `n` bytes from the front of the buffer but do not return the
     /// popped off bytes. This is rarely useful other than in combination with
     /// `peekn()`.
-    pub fn skipn(&mut self, n: usize) -> Result<()> {
+    pub fn skipn(&mut self, n: usize) -> ReadResult<()> {
         // Ensure the buffer is long enough to skip n bytes.
         ensure!(n <= self.len(), BufferTooShortSnafu);
 
@@ -144,7 +144,7 @@ impl<'a> ReadBuffer<'a> {
 
     /// Jumps back to offset `index`. Jumping beyond the current offset is not
     /// permitted and returns [`Error::InvalidJump`].
-    pub fn jump_to(&mut self, index: usize) -> Result<()> {
+    pub fn jump_to(&mut self, index: usize) -> ReadResult<()> {
         // Ensure we don't jump to ann index larger than the currennt offset.
         ensure!(
             index <= self.offset(),
@@ -271,7 +271,7 @@ impl<'a> ReadBuffer<'a> {
     /// assert_eq!(b.read_char_string(Some(3)), Err(Error::MaxLengthOverflow));
     /// assert_eq!(b.len(), 8);
     /// ```
-    pub fn read_char_string(&mut self, max_len: Option<u8>) -> Result<&[u8]> {
+    pub fn read_char_string(&mut self, max_len: Option<u8>) -> ReadResult<&[u8]> {
         let len = self.peek().context(BufferTooShortSnafu)? as usize;
 
         if let Some(max_len) = max_len {
@@ -297,7 +297,7 @@ impl<'a> ReadBuffer<'a> {
     /// assert_eq!(b.read_slice(4), Ok(&[69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
     /// ```
-    pub fn read_slice(&mut self, nbytes: usize) -> Result<&[u8]> {
+    pub fn read_slice(&mut self, nbytes: usize) -> ReadResult<&[u8]> {
         ensure!(nbytes <= self.len(), BufferTooShortSnafu);
 
         let (slice, rest) = self.rest.split_at(nbytes);
@@ -319,7 +319,7 @@ impl<'a> ReadBuffer<'a> {
     /// assert_eq!(b.read_vec(4), Ok(vec![69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
     /// ```
-    pub fn read_vec(&mut self, nbytes: usize) -> Result<Vec<u8>> {
+    pub fn read_vec(&mut self, nbytes: usize) -> ReadResult<Vec<u8>> {
         self.read_slice(nbytes).map(ToOwned::to_owned)
     }
 }
@@ -327,8 +327,8 @@ impl<'a> ReadBuffer<'a> {
 pub trait FromBuffer: Sized {
     const SIZE: usize;
 
-    fn as_be(buf: &mut ReadBuffer) -> Result<Self>;
-    fn as_le(buf: &mut ReadBuffer) -> Result<Self>;
+    fn as_be(buf: &mut ReadBuffer) -> ReadResult<Self>;
+    fn as_le(buf: &mut ReadBuffer) -> ReadResult<Self>;
 }
 
 /// All types which implement this trait can be constructed by reading from
@@ -361,7 +361,7 @@ pub trait Readable: Sized {
     /// let i = u16::read::<BigEndian>(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error>;
+    fn read<E: Endianness>(buf: &mut ReadBuffer) -> ReadResult<Self, Self::Error>;
 
     /// Read [`Self`] with big endian encoding from a [`ReadBuffer`].
     /// Internally this calls `Self::read::<BigEndian>()`.
@@ -377,7 +377,7 @@ pub trait Readable: Sized {
     /// let i = u16::read_be(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read_be(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_be(buf: &mut ReadBuffer) -> ReadResult<Self, Self::Error> {
         Self::read::<BigEndian>(buf)
     }
 
@@ -395,7 +395,7 @@ pub trait Readable: Sized {
     /// let i = u16::read_le(&mut b).unwrap();
     /// assert_eq!(i, 22597);
     /// ```
-    fn read_le(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_le(buf: &mut ReadBuffer) -> ReadResult<Self, Self::Error> {
         Self::read::<LittleEndian>(buf)
     }
 }
@@ -437,7 +437,7 @@ pub trait ReadableVerify: Readable {
     /// let le = u16::read_verify::<LittleEndian>(&mut b).unwrap();
     /// assert_eq!(le, 22597);
     /// ```
-    fn read_verify<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_verify<E: Endianness>(buf: &mut ReadBuffer) -> ReadResult<Self, Self::Error> {
         Self::supports::<E>()?;
         Self::read::<E>(buf)
     }
@@ -445,21 +445,21 @@ pub trait ReadableVerify: Readable {
     /// Read [`Self`] from a [`ReadBuffer`]. This will fail and return an error
     /// if the type does not support the big endian encoding. Internally this
     /// calls `Self::read_verify::<BigEndian>()`.
-    fn read_verify_be(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_verify_be(buf: &mut ReadBuffer) -> ReadResult<Self, Self::Error> {
         Self::read_verify::<BigEndian>(buf)
     }
 
     /// Read [`Self`] from a [`ReadBuffer`]. This will fail and return an error
     /// if the type does not support the little endian encoding. Internally
     /// this calls `Self::read_verify::<LittleEndian>()`.
-    fn read_verify_le(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read_verify_le(buf: &mut ReadBuffer) -> ReadResult<Self, Self::Error> {
         Self::read_verify::<LittleEndian>(buf)
     }
 
     /// Returns if this type [`Self`] supports the requested endianness
     /// encoding. If not [`BufferError::UnsupportedEndianness`] ire
     /// returned.
-    fn supports<E: Endianness>() -> Result<()> {
+    fn supports<E: Endianness>() -> ReadResult<()> {
         ensure!(
             E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS),
             UnsupportedEndiannessSnafu {
@@ -508,7 +508,7 @@ pub trait ReadableMulti: Readable + Default + Copy {
     /// ```
     fn read_multi<E: Endianness, const S: usize>(
         buf: &mut ReadBuffer,
-    ) -> Result<[Self; S], Self::Error> {
+    ) -> ReadResult<[Self; S], Self::Error> {
         let mut a = [Self::default(); S];
 
         for b in a.iter_mut().take(S) {
@@ -518,11 +518,11 @@ pub trait ReadableMulti: Readable + Default + Copy {
         Ok(a)
     }
 
-    fn read_multi_be<const S: usize>(buf: &mut ReadBuffer) -> Result<[Self; S], Self::Error> {
+    fn read_multi_be<const S: usize>(buf: &mut ReadBuffer) -> ReadResult<[Self; S], Self::Error> {
         Self::read_multi::<BigEndian, S>(buf)
     }
 
-    fn read_multi_le<const S: usize>(buf: &mut ReadBuffer) -> Result<[Self; S], Self::Error> {
+    fn read_multi_le<const S: usize>(buf: &mut ReadBuffer) -> ReadResult<[Self; S], Self::Error> {
         Self::read_multi::<LittleEndian, S>(buf)
     }
 }
@@ -530,20 +530,20 @@ pub trait ReadableMulti: Readable + Default + Copy {
 pub trait ReadableMultiVerify: ReadableMulti + ReadableVerify {
     fn read_multi_verify<E: Endianness, const S: usize>(
         buf: &mut ReadBuffer,
-    ) -> Result<[Self; S], Self::Error> {
+    ) -> ReadResult<[Self; S], Self::Error> {
         Self::supports::<E>()?;
         Self::read_multi::<E, S>(buf)
     }
 
     fn read_multi_verify_be<const S: usize>(
         buf: &mut ReadBuffer,
-    ) -> Result<[Self; S], Self::Error> {
+    ) -> ReadResult<[Self; S], Self::Error> {
         Self::read_multi_verify::<BigEndian, S>(buf)
     }
 
     fn read_multi_verify_le<const S: usize>(
         buf: &mut ReadBuffer,
-    ) -> Result<[Self; S], Self::Error> {
+    ) -> ReadResult<[Self; S], Self::Error> {
         Self::read_multi_verify::<LittleEndian, S>(buf)
     }
 }

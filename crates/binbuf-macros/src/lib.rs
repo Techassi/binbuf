@@ -4,12 +4,12 @@ macro_rules! from_buffer_and_readable_impl {
         impl FromBuffer for $SelfT {
             const SIZE: usize = $Size;
 
-            fn as_be(buf: &mut crate::read::ReadBuffer) -> Result<Self> {
+            fn as_be(buf: &mut crate::read::ReadBuffer) -> crate::read::ReadResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_be_bytes(b.try_into().unwrap()))
             }
 
-            fn as_le(buf: &mut crate::read::ReadBuffer) -> Result<Self> {
+            fn as_le(buf: &mut crate::read::ReadBuffer) -> crate::read::ReadResult<Self> {
                 let b = buf.read_slice(Self::SIZE)?;
                 Ok(Self::from_le_bytes(b.try_into().unwrap()))
             }
@@ -17,7 +17,9 @@ macro_rules! from_buffer_and_readable_impl {
 
         impl Readable for $SelfT {
             type Error = crate::read::ReadError;
-            fn read<E: Endianness>(buf: &mut crate::read::ReadBuffer) -> Result<Self, Self::Error> {
+            fn read<E: Endianness>(
+                buf: &mut crate::read::ReadBuffer,
+            ) -> crate::read::ReadResult<Self> {
                 E::read(buf)
             }
         }
@@ -54,7 +56,7 @@ macro_rules! into_buffer_and_writeable_impl {
             fn write<E: Endianness>(
                 &self,
                 buf: &mut crate::write::WriteBuffer,
-            ) -> crate::write::Result {
+            ) -> crate::write::WriteResult {
                 Ok(E::write(*self, buf))
             }
         }

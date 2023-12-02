@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use binbuf::{read::*, BigEndian};
+use binbuf::{BigEndian, ReadBuffer, Readable};
 
 mod read_buffer;
 mod read_derive_enum;

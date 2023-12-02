@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use binbuf::{write::*, BigEndian};
+use binbuf::{BigEndian, WriteBuffer, Writeable};
 
 mod write_buffer;
 mod write_derive;

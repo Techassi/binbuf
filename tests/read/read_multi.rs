@@ -1,4 +1,4 @@
-use binbuf::{read::*, BigEndian};
+use binbuf::{BigEndian, ReadBuffer, ReadableMulti};
 
 #[test]
 fn test_read_multi_u8() {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use binbuf::{write::*, BigEndian};
+use binbuf::{BigEndian, WriteBuffer, Writeable};
 
 #[test]
 fn test_write_multi_u8() {
