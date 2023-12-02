@@ -1,7 +1,7 @@
 #[cfg(feature = "derive")]
 #[test]
 fn text_writeable_impl_derive_simple() {
-    use binbuf::prelude::*;
+    use binbuf::{write::WriteBuffer, BigEndian, Writeable};
 
     #[derive(Writeable)]
     struct Data {
@@ -23,7 +23,7 @@ fn text_writeable_impl_derive_simple() {
 #[cfg(feature = "derive")]
 #[test]
 fn text_writeable_impl_derive_more_fields() {
-    use binbuf::prelude::*;
+    use binbuf::{write::WriteBuffer, BigEndian, Writeable};
     use std::net::Ipv4Addr;
 
     #[derive(Writeable)]
@@ -52,7 +52,7 @@ fn text_writeable_impl_derive_more_fields() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_writeable_impl_derive_nested() {
-    use binbuf::prelude::*;
+    use binbuf::{write::WriteBuffer, BigEndian, Writeable};
 
     #[derive(Writeable)]
     struct Data {
