@@ -110,4 +110,6 @@ impl Endianness for LittleEndian {
 pub use binbuf_derive::{Readable, Writeable};
 
 #[cfg(feature = "macros")]
-pub use binbuf_macros::bytes_written;
+pub mod macros {
+    pub use binbuf_macros::bytes_written;
+}
