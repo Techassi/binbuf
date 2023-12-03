@@ -1,4 +1,7 @@
-use binbuf::{BigEndian, Endianness, WriteBuffer, WriteError, Writeable};
+use binbuf::{
+    write::{WriteBuffer, WriteError, Writeable},
+    BigEndian, Endianness,
+};
 
 #[test]
 fn test_writeable_impl() {

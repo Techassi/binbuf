@@ -1,4 +1,4 @@
-use binbuf::WriteBuffer;
+use binbuf::write::WriteBuffer;
 
 #[test]
 fn test_write_span_basic() {

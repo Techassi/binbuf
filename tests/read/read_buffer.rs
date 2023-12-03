@@ -1,4 +1,4 @@
-use binbuf::ReadBuffer;
+use binbuf::read::ReadBuffer;
 
 #[test]
 fn test_new_read_buffer() {

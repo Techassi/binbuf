@@ -1,4 +1,7 @@
-use binbuf::{BigEndian, Endianness, ReadBuffer, ReadError, Readable};
+use binbuf::{
+    read::{ReadBuffer, ReadError, Readable},
+    BigEndian, Endianness,
+};
 
 #[test]
 fn test_readable_impl() {

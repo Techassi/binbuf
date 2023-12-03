@@ -1,4 +1,4 @@
-use binbuf::WriteBuffer;
+use binbuf::write::WriteBuffer;
 
 #[test]
 fn test_new_write_buffer() {
