@@ -245,7 +245,7 @@ pub trait IntoBuffer: Sized {
 }
 
 pub trait Writeable: Sized {
-    type Error: std::error::Error + std::fmt::Display + From<WriteError>;
+    type Error: std::error::Error + std::fmt::Display;
 
     fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> WriteResult<usize, Self::Error>;
 
@@ -258,7 +258,10 @@ pub trait Writeable: Sized {
     }
 }
 
-pub trait WriteableVerify: Writeable {
+pub trait WriteableVerify: Writeable
+where
+    <Self as Writeable>::Error: From<WriteError>,
+{
     const SUPPORTED_ENDIANNESS: SupportedEndianness;
 
     fn write_verify<E: Endianness>(
@@ -311,7 +314,10 @@ impl<T: Writeable> Writeable for Vec<T> {
     }
 }
 
-impl<T: WriteableVerify> WriteableVerify for Vec<T> {
+impl<T: WriteableVerify> WriteableVerify for Vec<T>
+where
+    <Self as Writeable>::Error: From<WriteError>,
+{
     const SUPPORTED_ENDIANNESS: SupportedEndianness = T::SUPPORTED_ENDIANNESS;
 }
 
@@ -327,6 +333,9 @@ impl<K, V: Writeable> Writeable for HashMap<K, V> {
     }
 }
 
-impl<K, V: WriteableVerify> WriteableVerify for HashMap<K, V> {
+impl<K, V: WriteableVerify> WriteableVerify for HashMap<K, V>
+where
+    <Self as Writeable>::Error: From<WriteError>,
+{
     const SUPPORTED_ENDIANNESS: SupportedEndianness = V::SUPPORTED_ENDIANNESS;
 }
