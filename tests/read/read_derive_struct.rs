@@ -1,7 +1,7 @@
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_simple() {
-    use binbuf::{read::ReadBuffer, BigEndian, Readable};
+    use binbuf::{read::Reader, BigEndian, Read};
 
     #[derive(Readable)]
     struct Data {
@@ -18,7 +18,7 @@ fn test_readable_derive_simple() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_three_fields() {
-    use binbuf::{read::ReadBuffer, BigEndian, Readable};
+    use binbuf::{read::Reader, BigEndian, Read};
 
     #[derive(Readable)]
     struct Data {
@@ -39,7 +39,7 @@ fn test_readable_derive_three_fields() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_ipaddr() {
-    use binbuf::{read::ReadBuffer, BigEndian, Readable};
+    use binbuf::{read::Reader, BigEndian, Read};
     use std::net::Ipv4Addr;
 
     #[derive(Readable)]
@@ -63,7 +63,7 @@ fn test_readable_derive_ipaddr() {
 #[allow(dead_code, unused_variables)]
 #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: BufferTooShort")]
 fn test_readable_derive_overflow() {
-    use binbuf::{read::ReadBuffer, BigEndian, Readable};
+    use binbuf::{read::Reader, BigEndian, Read};
 
     #[derive(Readable)]
     struct Data {
@@ -80,7 +80,7 @@ fn test_readable_derive_overflow() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_nested() {
-    use binbuf::{read::ReadBuffer, BigEndian, Readable};
+    use binbuf::{read::Reader, BigEndian, Read};
 
     #[derive(Readable)]
     struct Data {
@@ -106,8 +106,8 @@ fn test_readable_derive_nested() {
 #[test]
 fn test_readable_derive_struct_attrs_error() {
     use binbuf::{
-        read::{ReadBuffer, ReadError},
-        BigEndian, Readable,
+        read::{Error, Reader},
+        BigEndian, Read,
     };
 
     #[derive(Readable, Debug, PartialEq)]
@@ -128,8 +128,8 @@ fn test_readable_derive_struct_attrs_error() {
 #[test]
 fn test_readable_derive_struct_attrs_endianness() {
     use binbuf::{
-        read::{ReadBuffer, ReadError},
-        BigEndian, Readable, SupportedEndianness,
+        read::{Error, Reader},
+        BigEndian, Read, SupportedEndianness,
     };
 
     #[derive(Readable, Debug, PartialEq)]
@@ -154,7 +154,7 @@ fn test_readable_derive_struct_attrs_endianness() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_struct_field_attrs() {
-    use binbuf::{BigEndian, Readable};
+    use binbuf::{BigEndian, Read};
 
     #[derive(Readable, Debug, PartialEq)]
     struct Data {

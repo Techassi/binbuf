@@ -1,9 +1,9 @@
-use binbuf::read::ReadBuffer;
+use binbuf::read::Reader;
 
 #[test]
 fn test_new_read_buffer() {
     let data = &[69, 88, 65, 77, 80, 76, 69, 33];
-    let buf = ReadBuffer::new(data);
+    let buf = Reader::new(data);
 
     assert_eq!(buf.len(), 8);
 }
@@ -11,7 +11,7 @@ fn test_new_read_buffer() {
 #[test]
 fn test_read_buffer_reset() {
     let data = &[69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(data);
+    let mut buf = Reader::new(data);
 
     assert_eq!(buf.len(), 8);
 
@@ -25,7 +25,7 @@ fn test_read_buffer_reset() {
 #[test]
 fn test_read_buffer_jump() {
     let data = &[69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(data);
+    let mut buf = Reader::new(data);
 
     buf.read_vec(4).unwrap();
     assert_eq!(buf.offset(), 4);

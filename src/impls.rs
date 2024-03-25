@@ -1,129 +1,103 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::{
-    read::{FromBuffer, ReadBuffer, ReadError, ReadResult, Readable, ReadableVerify},
-    write::{IntoBuffer, WriteBuffer, WriteError, Writeable, WriteableVerify},
+    read::{self, FromReader, Read, Reader},
+    write::{self, IntoWriter, Write, WriteError, Writer},
     Endianness, SupportedEndianness,
 };
 
-impl FromBuffer for Ipv4Addr {
+impl FromReader for Ipv4Addr {
     const SIZE: usize = 4;
 
-    fn as_be(buf: &mut ReadBuffer) -> ReadResult<Self> {
+    fn as_be(buf: &mut Reader) -> read::Result<Self> {
         let b = u32::read_be(buf)?;
         Ok(Self::from(b))
     }
 
-    fn as_le(buf: &mut ReadBuffer) -> ReadResult<Self> {
+    fn as_le(buf: &mut Reader) -> read::Result<Self> {
         let b = u32::read_le(buf)?;
         Ok(Self::from(b))
     }
 }
 
-impl Readable for Ipv4Addr {
-    type Error = ReadError;
+impl Read for Ipv4Addr {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 
-    fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read<E: Endianness>(buf: &mut Reader) -> read::Result<Self> {
         E::read(buf)
     }
 }
 
-impl ReadableVerify for Ipv4Addr {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-}
-
-impl IntoBuffer for Ipv4Addr {
+impl IntoWriter for Ipv4Addr {
     const SIZE: usize = 4;
 
-    fn as_be(&self, buf: &mut WriteBuffer) -> usize {
+    fn as_be(&self, buf: &mut Writer) -> usize {
         let b = self.octets();
         buf.write(b)
     }
 
-    fn as_le(&self, buf: &mut WriteBuffer) -> usize {
+    fn as_le(&self, buf: &mut Writer) -> usize {
         let mut b = self.octets();
         b.reverse();
         buf.write(b)
     }
 }
 
-impl Writeable for Ipv4Addr {
-    type Error = WriteError;
-
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+impl Write for Ipv4Addr {
+    fn write<E: Endianness>(&self, buf: &mut Writer) -> write::Result {
         Ok(E::write(*self, buf))
     }
 }
 
-impl WriteableVerify for Ipv4Addr {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-}
-
-impl FromBuffer for Ipv6Addr {
+impl FromReader for Ipv6Addr {
     const SIZE: usize = 16;
 
-    fn as_be(buf: &mut ReadBuffer) -> ReadResult<Self> {
+    fn as_be(buf: &mut Reader) -> read::Result<Self> {
         let b = u128::read_be(buf)?;
         Ok(Self::from(b))
     }
 
-    fn as_le(buf: &mut ReadBuffer) -> ReadResult<Self> {
+    fn as_le(buf: &mut Reader) -> read::Result<Self> {
         let b = u128::read_le(buf)?;
         Ok(Self::from(b))
     }
 }
 
-impl Readable for Ipv6Addr {
-    type Error = ReadError;
+impl Read for Ipv6Addr {
+    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 
-    fn read<E: Endianness>(buf: &mut ReadBuffer) -> Result<Self, Self::Error> {
+    fn read<E: Endianness>(buf: &mut Reader) -> read::Result<Self> {
         E::read(buf)
     }
 }
 
-impl ReadableVerify for Ipv6Addr {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-}
-
-impl IntoBuffer for Ipv6Addr {
+impl IntoWriter for Ipv6Addr {
     const SIZE: usize = 16;
 
-    fn as_be(&self, buf: &mut WriteBuffer) -> usize {
+    fn as_be(&self, buf: &mut Writer) -> usize {
         let b = self.octets();
         buf.write(b)
     }
 
-    fn as_le(&self, buf: &mut WriteBuffer) -> usize {
+    fn as_le(&self, buf: &mut Writer) -> usize {
         let mut b = self.octets();
         b.reverse();
         buf.write(b)
     }
 }
 
-impl Writeable for Ipv6Addr {
-    type Error = WriteError;
-
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+impl Write for Ipv6Addr {
+    fn write<E: Endianness>(&self, buf: &mut Writer) -> write::Result {
         Ok(E::write(*self, buf))
     }
 }
 
-impl WriteableVerify for Ipv6Addr {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-}
-
-impl Writeable for String {
-    type Error = WriteError;
-
-    fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+impl Write for String {
+    fn write<E: Endianness>(&self, buf: &mut Writer) -> write::Result {
         if !self.is_ascii() {
             return Err(WriteError::NonAsciiData);
         }
 
         Ok(buf.write(self.as_bytes()))
     }
-}
-
-impl WriteableVerify for String {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
 }

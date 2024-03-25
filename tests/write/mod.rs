@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use binbuf::{write::WriteBuffer, BigEndian, Writeable};
+use binbuf::{write::Writer, BigEndian, Write};
 
 mod write_buffer;
 mod write_derive;
@@ -11,7 +11,7 @@ mod write_span;
 
 #[test]
 fn test_write_u8() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match 69u8.write::<BigEndian>(&mut b) {
         Ok(n) => {
@@ -24,7 +24,7 @@ fn test_write_u8() {
 
 #[test]
 fn test_write_u16() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match 17752u16.write::<BigEndian>(&mut b) {
         Ok(n) => {
@@ -37,7 +37,7 @@ fn test_write_u16() {
 
 #[test]
 fn test_write_u32() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match 1163411789u32.write::<BigEndian>(&mut b) {
         Ok(n) => {
@@ -50,7 +50,7 @@ fn test_write_u32() {
 
 #[test]
 fn test_write_u64() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match 4996815586883028257u64.write::<BigEndian>(&mut b) {
         Ok(n) => {
@@ -63,7 +63,7 @@ fn test_write_u64() {
 
 #[test]
 fn test_write_char_string() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match b.write_char_string::<u8>(&[69, 88, 65, 77, 80, 76, 69, 33], None) {
         Ok(n) => {
@@ -85,7 +85,7 @@ fn test_write_char_string() {
 
 #[test]
 fn test_write_ipv4addr() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
     let i = Ipv4Addr::new(127, 0, 0, 1);
 
     match i.write::<BigEndian>(&mut b) {
@@ -99,7 +99,7 @@ fn test_write_ipv4addr() {
 
 #[test]
 fn test_write_ipv6addr() {
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
     let i = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
 
     match i.write::<BigEndian>(&mut b) {

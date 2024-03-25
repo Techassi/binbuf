@@ -1,5 +1,5 @@
 use binbuf::{
-    write::{WriteBuffer, WriteError, Writeable},
+    write::{Result, Write, Writer},
     BigEndian, Endianness,
 };
 
@@ -9,17 +9,15 @@ fn test_writeable_impl() {
         inner: u16,
     }
 
-    impl Writeable for Data {
-        type Error = WriteError;
-
-        fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    impl Write for Data {
+        fn write<E: Endianness>(&self, buf: &mut Writer) -> Result {
             self.inner.write::<E>(buf)
         }
     }
 
     let d = Data { inner: 17752 };
 
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
     match d.write::<BigEndian>(&mut b) {
         Ok(n) => {
             assert_eq!(n, 2);

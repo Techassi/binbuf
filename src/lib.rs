@@ -29,8 +29,8 @@
 use std::fmt::Display;
 
 use crate::{
-    read::{FromBuffer, ReadBuffer, ReadResult},
-    write::{IntoBuffer, WriteBuffer},
+    read::{FromReader, Reader, Result},
+    write::{IntoWriter, Writer},
 };
 
 mod impls;
@@ -38,8 +38,8 @@ pub mod read;
 pub mod write;
 
 pub use crate::{
-    read::{Readable, ReadableMulti, ReadableMultiVerify, ReadableVerify},
-    write::{Writeable, WriteableVerify},
+    read::{Read, ReadableMulti},
+    write::Write,
 };
 
 #[derive(Debug, PartialEq)]
@@ -62,8 +62,8 @@ impl Display for SupportedEndianness {
 pub trait Endianness {
     fn is_in_supported_endianness_set(supported: SupportedEndianness) -> bool;
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadResult<T>;
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize;
+    fn read<T: FromReader>(buf: &mut Reader) -> Result<T>;
+    fn write<T: IntoWriter>(n: T, buf: &mut Writer) -> usize;
 }
 
 #[derive(Debug)]
@@ -77,11 +77,11 @@ impl Endianness for BigEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadResult<T> {
+    fn read<T: FromReader>(buf: &mut Reader) -> Result<T> {
         T::as_be(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize {
+    fn write<T: IntoWriter>(n: T, buf: &mut Writer) -> usize {
         n.as_be(buf)
     }
 }
@@ -97,11 +97,11 @@ impl Endianness for LittleEndian {
         }
     }
 
-    fn read<T: FromBuffer>(buf: &mut ReadBuffer) -> ReadResult<T> {
+    fn read<T: FromReader>(buf: &mut Reader) -> Result<T> {
         T::as_le(buf)
     }
 
-    fn write<T: IntoBuffer>(n: T, buf: &mut WriteBuffer) -> usize {
+    fn write<T: IntoWriter>(n: T, buf: &mut Writer) -> usize {
         n.as_le(buf)
     }
 }

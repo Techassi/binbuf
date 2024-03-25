@@ -1,9 +1,9 @@
-use binbuf::{read::ReadBuffer, BigEndian, ReadableMulti};
+use binbuf::{read::Reader, BigEndian, ReadableMulti};
 
 #[test]
 fn test_read_multi_u8() {
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut b = ReadBuffer::new(b.as_slice());
+    let mut b = Reader::new(b.as_slice());
 
     let [v1, v2] = match u8::read_multi::<BigEndian, 2>(&mut b) {
         Ok(n) => n,
@@ -17,7 +17,7 @@ fn test_read_multi_u8() {
 #[test]
 fn test_read_multi_u16() {
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut b = ReadBuffer::new(b.as_slice());
+    let mut b = Reader::new(b.as_slice());
 
     let [v1, v2] = match u16::read_multi::<BigEndian, 2>(&mut b) {
         Ok(n) => n,
@@ -31,7 +31,7 @@ fn test_read_multi_u16() {
 #[test]
 fn test_read_multi_u32() {
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut b = ReadBuffer::new(b.as_slice());
+    let mut b = Reader::new(b.as_slice());
 
     let [v1, v2] = match u32::read_multi::<BigEndian, 2>(&mut b) {
         Ok(n) => n,
@@ -45,7 +45,7 @@ fn test_read_multi_u32() {
 #[test]
 fn test_read_multi_u64() {
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut b = ReadBuffer::new(b.as_slice());
+    let mut b = Reader::new(b.as_slice());
 
     let [v] = match u64::read_multi::<BigEndian, 1>(&mut b) {
         Ok(n) => n,
@@ -60,7 +60,7 @@ fn test_read_multi_u128() {
     let b = vec![
         69, 88, 65, 77, 80, 76, 69, 33, 69, 88, 65, 77, 80, 76, 69, 33,
     ];
-    let mut b = ReadBuffer::new(b.as_slice());
+    let mut b = Reader::new(b.as_slice());
 
     let [v] = match u128::read_multi::<BigEndian, 1>(&mut b) {
         Ok(n) => n,
