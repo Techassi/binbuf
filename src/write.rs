@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use binbuf_macros::into_buffer_and_writeable_impl;
 use snafu::{ensure, Snafu};
 
-use crate::{BigEndian, Endianness, LittleEndian, SupportedEndianness};
+use crate::Endianness;
 
 pub type Result<T = usize, E = WriteError> = std::result::Result<T, E>;
 
@@ -17,11 +17,11 @@ pub enum WriteError {
     #[snafu(display("max buffer length overflow"))]
     MaxLengthOverflow,
 
-    #[snafu(display("unsupported endianness, only supports: {support}"))]
-    UnsupportedEndianness { support: SupportedEndianness },
-
     #[snafu(display("non-ascii string data cannot be written"))]
     NonAsciiData,
+
+    LittleEndianNotSupported,
+    BigEndianNotSupported,
 }
 
 #[derive(Debug, Default)]
@@ -194,9 +194,10 @@ impl Writer {
     /// assert_eq!(b.len(), 5);
     /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
     /// ```
+    // FIXME (@Techassi): Remove the generic max_len because it is broken
     pub fn write_char_string<L>(&mut self, s: impl AsRef<[u8]>, max_len: Option<L>) -> Result
     where
-        L: num::Unsigned + num::Bounded + Into<usize>,
+        L: num::Unsigned + num::Bounded + Into<usize> + Write,
     {
         let s = s.as_ref();
         let len = s.len();
@@ -237,24 +238,19 @@ impl Writer {
     }
 }
 
-pub trait IntoWriter: Sized {
-    const SIZE: usize;
-
-    fn as_be(&self, buf: &mut Writer) -> usize;
-    fn as_le(&self, buf: &mut Writer) -> usize;
-}
-
 pub trait Write: Sized {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-
-    fn write<E: Endianness>(&self, buf: &mut Writer) -> Result<usize>;
-
-    fn write_be(&self, buf: &mut Writer) -> Result<usize> {
-        self.write::<BigEndian>(buf)
+    fn write<E: Endianness>(&self, buf: &mut Writer) -> Result<usize> {
+        E::write(self, buf)
     }
 
+    #[allow(unused_variables)]
+    fn write_be(&self, buf: &mut Writer) -> Result<usize> {
+        BigEndianNotSupportedSnafu.fail()
+    }
+
+    #[allow(unused_variables)]
     fn write_le(&self, buf: &mut Writer) -> Result<usize> {
-        self.write::<LittleEndian>(buf)
+        LittleEndianNotSupportedSnafu.fail()
     }
 }
 
@@ -266,8 +262,6 @@ into_buffer_and_writeable_impl!(u128, 16);
 into_buffer_and_writeable_impl!(usize, (usize::BITS / 8) as usize);
 
 impl<T: Write> Write for Vec<T> {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = T::SUPPORTED_ENDIANNESS;
-
     fn write<E: Endianness>(&self, buf: &mut Writer) -> Result {
         buf.enter();
         for item in self.iter() {
@@ -278,8 +272,6 @@ impl<T: Write> Write for Vec<T> {
 }
 
 impl<K, V: Write> Write for HashMap<K, V> {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = V::SUPPORTED_ENDIANNESS;
-
     fn write<E: Endianness>(&self, buf: &mut Writer) -> Result {
         buf.enter();
         for value in self.values() {

@@ -1,7 +1,7 @@
 use binbuf_macros::from_buffer_and_readable_impl;
 use snafu::{ensure, OptionExt, Snafu};
 
-use crate::{BigEndian, Endianness, LittleEndian, SupportedEndianness};
+use crate::{BigEndian, Endianness, LittleEndian};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -13,16 +13,21 @@ pub enum Error {
     BufferTooShort,
 
     #[snafu(display("invalid jump, jumping to {index} beyond offset {offset} is not permitted"))]
-    InvalidJump { index: usize, offset: usize },
+    InvalidJump {
+        index: usize,
+        offset: usize,
+    },
 
     #[snafu(display("max buffer length overflow"))]
     MaxLengthOverflow,
 
-    #[snafu(display("unsupported endianness, only supports: {support}"))]
-    UnsupportedEndianness { support: SupportedEndianness },
-
     #[snafu(display("failed to read data because {message}"))]
-    Custom { message: String },
+    Custom {
+        message: String,
+    },
+
+    LittleEndianNotSupported,
+    BigEndianNotSupported,
 }
 
 #[derive(Debug)]
@@ -327,13 +332,6 @@ impl<'a> Reader<'a> {
     }
 }
 
-pub trait FromReader: Sized {
-    const SIZE: usize;
-
-    fn as_be(buf: &mut Reader) -> Result<Self>;
-    fn as_le(buf: &mut Reader) -> Result<Self>;
-}
-
 /// All types which implement this trait can be constructed by reading from
 /// a [`ReadBuffer`]. An implementation for all sized unsigned integers is
 /// provided.
@@ -349,8 +347,6 @@ pub trait FromReader: Sized {
 /// assert_eq!(u16::read::<BigEndian>(&mut b), Ok(17752));
 /// ```
 pub trait Read: Sized {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-
     /// Read [`Self`] from a [`Reader`].
     ///
     /// ### Example
@@ -364,10 +360,14 @@ pub trait Read: Sized {
     /// let i = u16::read::<BigEndian>(&mut r).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
-    fn read<E: Endianness>(buf: &mut Reader) -> Result<Self>;
+    fn read<E: Endianness>(buf: &mut Reader) -> Result<Self> {
+        E::read(buf)
+    }
 
     /// Read [`Self`] with big endian encoding from a [`ReadBuffer`].
-    /// Internally this calls `Self::read::<BigEndian>()`.
+    ///
+    /// Leaving this function unimplemented (using the default implementation)
+    /// will indicate that this type does not support the big endian encoding.
     ///
     /// ### Example
     ///
@@ -380,19 +380,16 @@ pub trait Read: Sized {
     /// let i = u16::read_be(&mut b).unwrap();
     /// assert_eq!(i, 17752);
     /// ```
+    #[allow(unused_variables)]
     fn read_be(buf: &mut Reader) -> Result<Self> {
-        ensure!(
-            BigEndian::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS),
-            UnsupportedEndiannessSnafu {
-                support: Self::SUPPORTED_ENDIANNESS
-            }
-        );
-
-        Self::read::<BigEndian>(buf)
+        BigEndianNotSupportedSnafu.fail()
     }
 
     /// Read [`Self`] with little endian encoding from a [`ReadBuffer`].
-    /// Internally this calls `Self::read::<LittleEndian>()`.
+    ///
+    /// Leaving this function unimplemented (using the default implementation)
+    /// will indicate that this type does not support the little endian
+    /// encoding.
     ///
     /// ### Example
     ///
@@ -405,15 +402,9 @@ pub trait Read: Sized {
     /// let i = u16::read_le(&mut b).unwrap();
     /// assert_eq!(i, 22597);
     /// ```
+    #[allow(unused_variables)]
     fn read_le(buf: &mut Reader) -> Result<Self> {
-        ensure!(
-            LittleEndian::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS),
-            UnsupportedEndiannessSnafu {
-                support: Self::SUPPORTED_ENDIANNESS
-            }
-        );
-
-        Self::read::<LittleEndian>(buf)
+        LittleEndianNotSupportedSnafu.fail()
     }
 }
 
@@ -453,13 +444,6 @@ pub trait ReadableMulti: Read + Default + Copy {
     /// assert_eq!(i4, 17697);
     /// ```
     fn read_multi<E: Endianness, const S: usize>(buf: &mut Reader) -> Result<[Self; S]> {
-        ensure!(
-            E::is_in_supported_endianness_set(Self::SUPPORTED_ENDIANNESS),
-            UnsupportedEndiannessSnafu {
-                support: Self::SUPPORTED_ENDIANNESS
-            }
-        );
-
         let mut a = [Self::default(); S];
 
         for b in a.iter_mut().take(S) {

@@ -1,94 +1,58 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::{
-    read::{self, FromReader, Read, Reader},
-    write::{self, IntoWriter, Write, WriteError, Writer},
-    Endianness, SupportedEndianness,
+    read::{self, Read, Reader},
+    write::{self, Write, WriteError, Writer},
+    Endianness,
 };
 
-impl FromReader for Ipv4Addr {
-    const SIZE: usize = 4;
-
-    fn as_be(buf: &mut Reader) -> read::Result<Self> {
+impl Read for Ipv4Addr {
+    fn read_be(buf: &mut Reader) -> read::Result<Self> {
         let b = u32::read_be(buf)?;
         Ok(Self::from(b))
     }
 
-    fn as_le(buf: &mut Reader) -> read::Result<Self> {
+    fn read_le(buf: &mut Reader) -> read::Result<Self> {
         let b = u32::read_le(buf)?;
         Ok(Self::from(b))
     }
 }
 
-impl Read for Ipv4Addr {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-
-    fn read<E: Endianness>(buf: &mut Reader) -> read::Result<Self> {
-        E::read(buf)
-    }
-}
-
-impl IntoWriter for Ipv4Addr {
-    const SIZE: usize = 4;
-
-    fn as_be(&self, buf: &mut Writer) -> usize {
+impl Write for Ipv4Addr {
+    fn write_be(&self, buf: &mut Writer) -> write::Result<usize> {
         let b = self.octets();
-        buf.write(b)
+        Ok(buf.write(b))
     }
 
-    fn as_le(&self, buf: &mut Writer) -> usize {
+    fn write_le(&self, buf: &mut Writer) -> write::Result<usize> {
         let mut b = self.octets();
         b.reverse();
-        buf.write(b)
+        Ok(buf.write(b))
     }
 }
 
-impl Write for Ipv4Addr {
-    fn write<E: Endianness>(&self, buf: &mut Writer) -> write::Result {
-        Ok(E::write(*self, buf))
-    }
-}
-
-impl FromReader for Ipv6Addr {
-    const SIZE: usize = 16;
-
-    fn as_be(buf: &mut Reader) -> read::Result<Self> {
+impl Read for Ipv6Addr {
+    fn read_be(buf: &mut Reader) -> read::Result<Self> {
         let b = u128::read_be(buf)?;
         Ok(Self::from(b))
     }
 
-    fn as_le(buf: &mut Reader) -> read::Result<Self> {
+    fn read_le(buf: &mut Reader) -> read::Result<Self> {
         let b = u128::read_le(buf)?;
         Ok(Self::from(b))
     }
 }
 
-impl Read for Ipv6Addr {
-    const SUPPORTED_ENDIANNESS: SupportedEndianness = SupportedEndianness::Both;
-
-    fn read<E: Endianness>(buf: &mut Reader) -> read::Result<Self> {
-        E::read(buf)
-    }
-}
-
-impl IntoWriter for Ipv6Addr {
-    const SIZE: usize = 16;
-
-    fn as_be(&self, buf: &mut Writer) -> usize {
+impl Write for Ipv6Addr {
+    fn write_be(&self, buf: &mut Writer) -> write::Result<usize> {
         let b = self.octets();
-        buf.write(b)
+        Ok(buf.write(b))
     }
 
-    fn as_le(&self, buf: &mut Writer) -> usize {
+    fn write_le(&self, buf: &mut Writer) -> write::Result<usize> {
         let mut b = self.octets();
         b.reverse();
-        buf.write(b)
-    }
-}
-
-impl Write for Ipv6Addr {
-    fn write<E: Endianness>(&self, buf: &mut Writer) -> write::Result {
-        Ok(E::write(*self, buf))
+        Ok(buf.write(b))
     }
 }
 
