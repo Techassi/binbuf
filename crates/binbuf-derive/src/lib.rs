@@ -2,11 +2,10 @@ use proc_macro::TokenStream;
 use syn::{DeriveInput, Error};
 
 mod attrs;
-mod readable;
+mod read;
 mod shared;
-mod writeable;
+mod write;
 
-#[proc_macro_derive(Readable, attributes(binbuf))]
 /// Annotating a struct or enum with the derive macro [`Readable`] automatically
 /// implements the [`Readable`] trait and all its required functions and types.
 /// The trait provides a convenient method to read data from a (network) byte
@@ -32,15 +31,15 @@ mod writeable;
 /// assert_eq!(t.a, 17752);
 /// assert_eq!(t.b, 16717);
 /// ```
+#[proc_macro_derive(Read, attributes(binbuf))]
 pub fn readable_macro_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
-    readable::expand(input)
+    read::expand(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
 
-#[proc_macro_derive(Writeable)]
 /// Annotating a struct or enum with the derive macro [`Writeable`]
 /// automatically implements the [`Writeable`] trait and all its required
 /// functions and types. This macro is only available when the `derive` feature
@@ -68,10 +67,11 @@ pub fn readable_macro_derive(input: TokenStream) -> TokenStream {
 /// assert_eq!(b, vec![69, 88, 65, 77]);
 /// assert_eq!(n, 4);
 /// ```
+#[proc_macro_derive(Write)]
 pub fn writeable_macro_derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
-    writeable::expand(input)
+    write::expand(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }

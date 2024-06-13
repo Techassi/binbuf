@@ -1,15 +1,15 @@
 #[cfg(feature = "derive")]
 #[test]
 fn text_writeable_impl_derive_simple() {
-    use binbuf::{write::Writer, BigEndian, Write};
+    use binbuf::{BigEndian, Write, Writer};
 
-    #[derive(Writeable)]
+    #[derive(Write)]
     struct Data {
         inner: u16,
     }
 
     let d = Data { inner: 17752 };
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match d.write::<BigEndian>(&mut b) {
         Ok(n) => {
@@ -23,10 +23,10 @@ fn text_writeable_impl_derive_simple() {
 #[cfg(feature = "derive")]
 #[test]
 fn text_writeable_impl_derive_more_fields() {
-    use binbuf::{write::Writer, BigEndian, Write};
+    use binbuf::{BigEndian, Write, Writer};
     use std::net::Ipv4Addr;
 
-    #[derive(Writeable)]
+    #[derive(Write)]
     struct Data {
         v1: u16,
         v2: u16,
@@ -38,7 +38,7 @@ fn text_writeable_impl_derive_more_fields() {
         v2: 16717,
         v3: Ipv4Addr::new(80, 76, 69, 33),
     };
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     match d.write::<BigEndian>(&mut b) {
         Ok(n) => {
@@ -52,14 +52,14 @@ fn text_writeable_impl_derive_more_fields() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_writeable_impl_derive_nested() {
-    use binbuf::{write::Writer, BigEndian, Write};
+    use binbuf::{BigEndian, Write, Writer};
 
-    #[derive(Writeable)]
+    #[derive(Write)]
     struct Data {
         nested: Nested,
     }
 
-    #[derive(Writeable)]
+    #[derive(Write)]
     struct Nested {
         v1: u16,
         v2: u16,
@@ -72,7 +72,7 @@ fn test_writeable_impl_derive_nested() {
         },
     };
 
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
     match d.write::<BigEndian>(&mut b) {
         Ok(n) => {
             assert_eq!(n, 4);

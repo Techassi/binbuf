@@ -5,7 +5,7 @@ use crate::{BigEndian, Endianness, LittleEndian};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, PartialEq, Snafu)]
 pub enum Error {
     /// This error indicates that the buffer is too short to read the
     /// requested amount of bytes.
@@ -25,6 +25,9 @@ pub enum Error {
     Custom {
         message: String,
     },
+
+    #[snafu(display("invalid data"))]
+    InvalidData,
 
     LittleEndianNotSupported,
     BigEndianNotSupported,

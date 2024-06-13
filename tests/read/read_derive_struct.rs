@@ -1,15 +1,15 @@
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_simple() {
-    use binbuf::{read::Reader, BigEndian, Read};
+    use binbuf::{BigEndian, Read, Reader};
 
-    #[derive(Readable)]
+    #[derive(Read)]
     struct Data {
         inner: u16,
     }
 
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
+    let mut buf = Reader::new(b.as_slice());
 
     let data = Data::read::<BigEndian>(&mut buf).unwrap();
     assert_eq!(data.inner, 17752)
@@ -18,9 +18,9 @@ fn test_readable_derive_simple() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_three_fields() {
-    use binbuf::{read::Reader, BigEndian, Read};
+    use binbuf::{BigEndian, Read, Reader};
 
-    #[derive(Readable)]
+    #[derive(Read)]
     struct Data {
         v1: u16,
         v2: u32,
@@ -28,7 +28,7 @@ fn test_readable_derive_three_fields() {
     }
 
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
+    let mut buf = Reader::new(b.as_slice());
 
     let data = Data::read::<BigEndian>(&mut buf).unwrap();
     assert_eq!(data.v1, 17752);
@@ -39,10 +39,10 @@ fn test_readable_derive_three_fields() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_ipaddr() {
-    use binbuf::{read::Reader, BigEndian, Read};
+    use binbuf::{BigEndian, Read, Reader};
     use std::net::Ipv4Addr;
 
-    #[derive(Readable)]
+    #[derive(Read)]
     struct Data {
         v1: u16,
         v2: u16,
@@ -50,7 +50,7 @@ fn test_readable_derive_ipaddr() {
     }
 
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
+    let mut buf = Reader::new(b.as_slice());
 
     let data = Data::read::<BigEndian>(&mut buf).unwrap();
     assert_eq!(data.v1, 17752);
@@ -63,16 +63,16 @@ fn test_readable_derive_ipaddr() {
 #[allow(dead_code, unused_variables)]
 #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: BufferTooShort")]
 fn test_readable_derive_overflow() {
-    use binbuf::{read::Reader, BigEndian, Read};
+    use binbuf::{BigEndian, Read, Reader};
 
-    #[derive(Readable)]
+    #[derive(Read)]
     struct Data {
         v1: u64,
         v2: u16,
     }
 
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
+    let mut buf = Reader::new(b.as_slice());
 
     let data = Data::read::<BigEndian>(&mut buf).unwrap();
 }
@@ -80,21 +80,21 @@ fn test_readable_derive_overflow() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_nested() {
-    use binbuf::{read::Reader, BigEndian, Read};
+    use binbuf::{BigEndian, Read, Reader};
 
-    #[derive(Readable)]
+    #[derive(Read)]
     struct Data {
         nested: Nested,
     }
 
-    #[derive(Readable)]
+    #[derive(Read)]
     struct Nested {
         v1: u16,
         v2: u16,
     }
 
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
+    let mut buf = Reader::new(b.as_slice());
 
     let data = Data::read::<BigEndian>(&mut buf).unwrap();
 
@@ -105,12 +105,9 @@ fn test_readable_derive_nested() {
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_struct_attrs_error() {
-    use binbuf::{
-        read::{Error, Reader},
-        BigEndian, Read,
-    };
+    use binbuf::{read::Error, BigEndian, Read, Reader};
 
-    #[derive(Readable, Debug, PartialEq)]
+    #[derive(Read, Debug, PartialEq)]
     #[binbuf(error = "ReadError")]
     struct Data {
         v1: u64,
@@ -118,45 +115,18 @@ fn test_readable_derive_struct_attrs_error() {
     }
 
     let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
+    let mut buf = Reader::new(b.as_slice());
 
-    let result = Data::read::<BigEndian>(&mut buf);
-    assert_eq!(result, Result::Err(ReadError::BufferTooShort));
-}
-
-#[cfg(feature = "derive")]
-#[test]
-fn test_readable_derive_struct_attrs_endianness() {
-    use binbuf::{
-        read::{Error, Reader},
-        BigEndian, Read, SupportedEndianness,
-    };
-
-    #[derive(Readable, Debug, PartialEq)]
-    #[binbuf(endianness = "little")]
-    struct Data {
-        v1: u16,
-        v2: u16,
-    }
-
-    let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    let mut buf = ReadBuffer::new(b.as_slice());
-
-    let result = Data::read_verify::<BigEndian>(&mut buf);
-    assert_eq!(
-        result,
-        Result::Err(ReadError::UnsupportedEndianness(
-            SupportedEndianness::LittleEndian
-        ))
-    );
+    let err = Data::read::<BigEndian>(&mut buf).unwrap_err();
+    assert_eq!(err, Error::BufferTooShort);
 }
 
 #[cfg(feature = "derive")]
 #[test]
 fn test_readable_derive_struct_field_attrs() {
-    use binbuf::{BigEndian, Read};
+    use binbuf::Read;
 
-    #[derive(Readable, Debug, PartialEq)]
+    #[derive(Read, Debug, PartialEq)]
     struct Data {
         #[binbuf(skip_read = true)]
         v1: u16,

@@ -3,7 +3,7 @@
 binbuf (short for *binary buffers*) is a small library to work with binary (network) data in Rust. Just add
 `binbuf::prelude::*` to your imports. This imports the most important parts of the library.
 
-## Reading from `ReadBuffer`
+## Reading from `Reader`
 
 ### Reading basic types
 
@@ -12,7 +12,7 @@ The library provides multiple methods to read basic data types like `u8`, `u16`,
 
 ```rust
 let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-let mut b = ReadBuffer::new(b.as_slice());
+let mut b = Reader::new(b.as_slice());
 
 match u16::read::<BigEndian>(&mut b) {
     Ok(n) => assert_eq!(n, 17752),
@@ -20,9 +20,9 @@ match u16::read::<BigEndian>(&mut b) {
 }
 ```
 
-### Reading structs
+### Reading structs and enums
 
-To read custom data structs, we can use the derive macro `#[derive(Read)]` to annotate the structs.
+To read custom data structs or enums, we can use the derive macro `#[derive(Read)]` to annotate the structs.
 
 ```rust
 #[derive(Read)]
@@ -31,7 +31,7 @@ struct Data {
 }
 
 let b = vec![69, 88, 65, 77, 80, 76, 69, 33];
-let mut buf = ReadBuffer::new(b.as_slice());
+let mut buf = Reader::new(b.as_slice());
 
 match Data::read::<BigEndian>(&mut buf) {
     Ok(data) => assert_eq!(data.inner, 17752),
@@ -39,7 +39,8 @@ match Data::read::<BigEndian>(&mut buf) {
 }
 ```
 
-Customize the derive macro by annotating the struct with additional attributes: `#[binbuf()]`. Currently, the following attributes are supported:
+Customize the derive macro by annotating the struct with additional attributes: `#[binbuf()]`. Currently, the following
+container attributes are supported:
 
 - `#[binbuf(error = "...")]`
 
@@ -61,15 +62,11 @@ Customize the derive macro by annotating the struct with additional attributes: 
   - `both`
   - `big`
 
-**Full example**
+Enums can be tagged with one additional attribute:
 
-```rust
-#[derive(Read)]
-#[binbuf(error = "CustomError", endianness = "big")]
-struct Data {
-    inner: u16,
-}
-```
+- `#[binbuf(repr = "...")]`
+
+  > Default value: `u8`
 
 The library works well with the `thiserror` crate. Implementing custom errors with the `Error` derive macro is
 straightforward:

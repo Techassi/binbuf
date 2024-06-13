@@ -13,7 +13,7 @@ pub struct EnumReadAttrs {
 impl Default for EnumReadAttrs {
     fn default() -> Self {
         Self {
-            error: LitStr::new("binbuf::read::ReadError", Span::call_site()),
+            error: LitStr::new("::binbuf::read::Error", Span::call_site()),
             endianness: LitStr::new("both", Span::call_site()),
             repr: LitStr::new("u8", Span::call_site()),
         }

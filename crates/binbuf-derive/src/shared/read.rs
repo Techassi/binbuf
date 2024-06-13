@@ -30,8 +30,7 @@ pub fn gen_readable_impl(
 
     quote! {
         #[automatically_derived]
-        impl ::binbuf::read::Readable for #struct_name {
-            type Error = #error;
+        impl ::binbuf::read::Read for #struct_name {
             #[doc = #doc_header]
             ///
             /// ### Example
@@ -42,7 +41,7 @@ pub fn gen_readable_impl(
             /// let mut buf = ReadBuffer::new(&data[..]);
             #[doc = #doc_func]
             /// ```
-            fn read<E: ::binbuf::Endianness>(buf: &mut ::binbuf::read::ReadBuffer) -> Result<Self, Self::Error> {
+            fn read<E: ::binbuf::Endianness>(buf: &mut ::binbuf::read::Reader) -> ::binbuf::read::Result<Self> {
                 #read_inner
             }
         }

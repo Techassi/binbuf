@@ -60,12 +60,11 @@ fn expand_struct(
 
     // Generate trait impls
     let readable_impl = shared::gen_readable_impl(struct_name, read_inner, readable_error);
-    let readable_verify_impl =
-        shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness)?;
+    // let readable_verify_impl =
+    //     shared::gen_readable_verify_impl(struct_name, struct_attrs.endianness)?;
 
     Ok(quote! {
         #readable_impl
-        #readable_verify_impl
     })
 }
 
@@ -92,14 +91,12 @@ fn expand_enum(
     // Implement From<REPR> for ENUM
     let from_repr_impl = gen_from_repr_impl_enum(enum_name, &enum_data, &enum_attrs)?;
     let readable_impl = shared::gen_readable_impl(enum_name, read_inner, error);
-    let readable_verify_impl = shared::gen_readable_verify_impl(enum_name, enum_attrs.endianness)?;
-
+    // let readable_verify_impl = shared::gen_readable_verify_impl(enum_name, enum_attrs.endianness)?;
     // let from_enum_impl = gen_from_enum_impl_repr(enum_name, &enum_data, &enum_attrs)?;
 
     Ok(quote! {
         #from_repr_impl
         #readable_impl
-        #readable_verify_impl
     })
 }
 

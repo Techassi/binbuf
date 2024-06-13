@@ -27,15 +27,13 @@
 //! }
 //! ```
 
-use crate::{read::Reader, write::Writer};
-
 mod impls;
 pub mod read;
 pub mod write;
 
 pub use crate::{
-    read::{Read, ReadableMulti},
-    write::Write,
+    read::{Read, ReadableMulti, Reader},
+    write::{Write, Writer},
 };
 
 pub trait Endianness {
@@ -68,7 +66,7 @@ impl Endianness for LittleEndian {
 }
 
 #[cfg(feature = "derive")]
-pub use binbuf_derive::{Readable, Writeable};
+pub use binbuf_derive::{Read, Write};
 
 #[cfg(feature = "macros")]
 pub mod macros {

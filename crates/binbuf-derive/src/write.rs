@@ -57,9 +57,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
 
     Ok(quote! {
         #[automatically_derived]
-        impl ::binbuf::write::Writeable for #struct_name {
-            type Error = ::binbuf::write::WriteError;
-
+        impl ::binbuf::write::Write for #struct_name {
             #[doc = #doc_header]
             ///
             /// ### Example
@@ -70,7 +68,7 @@ pub fn expand(input: DeriveInput) -> Result<TokenStream> {
             /// let mut buf = WriteBuffer::new();
             #[doc = #doc_func]
             /// ```
-            fn write<E: ::binbuf::Endianness>(&self, buf: &mut ::binbuf::write::WriteBuffer) -> Result<usize, Self::Error>
+            fn write<E: ::binbuf::Endianness>(&self, buf: &mut ::binbuf::write::Writer) -> ::binbuf::write::Result
             {
                 #c
             }

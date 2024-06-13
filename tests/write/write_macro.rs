@@ -1,19 +1,18 @@
 #[cfg(feature = "macros")]
 #[test]
 fn test_write_macro() {
-    use binbuf::prelude::*;
+    use binbuf::{write::Result, BigEndian, Endianness, Write, Writer};
+    use binbuf_macros::bytes_written;
 
-    let mut b = WriteBuffer::new();
+    let mut b = Writer::new();
 
     struct Data {
         v1: u8,
         v2: u16,
     }
 
-    impl Writeable for Data {
-        type Error = BufferError;
-
-        fn write<E: Endianness>(&self, buf: &mut WriteBuffer) -> Result<usize, Self::Error> {
+    impl Write for Data {
+        fn write<E: Endianness>(&self, buf: &mut Writer) -> Result {
             let n = bytes_written! {
                 self.v1.write::<E>(buf)?;
                 self.v2.write::<E>(buf)?
