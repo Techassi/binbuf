@@ -14,9 +14,6 @@ pub enum WriteError {
     ))]
     LengthLabelOverflow,
 
-    #[snafu(display("max buffer length overflow"))]
-    MaxLengthOverflow,
-
     #[snafu(display("non-ascii string data cannot be written"))]
     NonAsciiData,
 
@@ -31,14 +28,14 @@ pub struct Writer {
 }
 
 impl Writer {
-    /// Creates a new empty [`Buffer`] backed by a `Vec<u8>`.
+    /// Creates a new empty [`Writer`] backed by a [`Vec<u8>`].
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// 17752u16.write::<BigEndian>(&mut b).unwrap();
     ///
     /// assert_eq!(b.len(), 2);
@@ -48,16 +45,16 @@ impl Writer {
         Self::default()
     }
 
-    /// Creates a new [`Buffer`] backed by a `Vec<u8>` with the provided bytes
+    /// Creates a new [`Writer`] backed by a [`Vec<u8>`] with the provided bytes
     /// already in the buffer. Possible parameters are: `Vec<u8>`, `&[u8]`, and
     /// `[u8]`.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new_with([69, 88]);
+    /// let mut b = Writer::new_with([69, 88]);
     /// assert_eq!(b.bytes(), &[69, 88]);
     /// ```
     pub fn new_with<T: AsRef<[u8]>>(b: T) -> Self {
@@ -71,14 +68,14 @@ impl Writer {
         buf
     }
 
-    /// Adds a new byte to the end of the [`Buffer`].
+    /// Adds a new byte to the end of the [`Writer`].
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// b.push(69);
     ///
     /// assert_eq!(b.len(), 1);
@@ -92,14 +89,14 @@ impl Writer {
         }
     }
 
-    /// Clears the [`Buffer`], removing all bytes.
+    /// Clears the [`Writer`], removing all bytes.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new_with([69, 88]);
+    /// let mut b = Writer::new_with([69, 88]);
     /// b.clear();
     ///
     /// assert_eq!(b.len(), 0);
@@ -108,28 +105,28 @@ impl Writer {
         self.buf.clear()
     }
 
-    /// Returns the length of the [`Buffer`].
+    /// Returns the length of the [`Writer`].
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new_with([69, 88]);
+    /// let mut b = Writer::new_with([69, 88]);
     /// assert_eq!(b.len(), 2);
     /// ```
     pub fn len(&self) -> usize {
         self.buf.len()
     }
 
-    /// Returns if the [`Buffer`] is empty.
+    /// Returns if the [`Writer`] is empty.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// assert_eq!(b.is_empty(), true);
     ///
     /// b.push(69);
@@ -139,15 +136,15 @@ impl Writer {
         self.buf.is_empty()
     }
 
-    /// Writes multiple bytes of data to the [`Buffer`]. Possible
+    /// Writes multiple bytes of data to the [`Writer`]. Possible
     /// parameters are: `Vec<u8>`, `&[u8]`, and `[u8]`.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// b.write(vec![69, 88, 65]);
     ///
     /// assert_eq!(b.len(), 3);
@@ -166,7 +163,8 @@ impl Writer {
         len
     }
 
-    /// Writes a character string to the [`Buffer`]. This will first write the
+    // TODO (@Techassi): Update doc comment
+    /// Writes a character string to the [`Writer`]. This will first write the
     /// length of the string as a sequence of bytes which is followed by the
     /// actual string contents.
     ///
@@ -176,40 +174,30 @@ impl Writer {
     /// returns [`Error::MaxLengthOverflow`].
     ///
     /// It is possible to write character strings, which exceeds the length of
-    /// [`u8::MAX`][u8max]. Most network protocols however only allow character
-    /// strings with a max size of [`u8::MAX`][u8max] at most. DNS being one
+    /// [`u8::MAX`]. Most network protocols however only allow character
+    /// strings with a max size of [`u8::MAX`] at most. DNS being one
     /// prominent example. The length label is currently **only** writen using
     /// big endian byte order.
-    ///
-    /// [u8max]: https://doc.rust-lang.org/std/primitive.u8.html#associatedconstant.MAX
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// b.write_char_string(&[88, 65, 77, 80], None).unwrap();
     ///
     /// assert_eq!(b.len(), 5);
     /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
     /// ```
     // FIXME (@Techassi): Remove the generic max_len because it is broken
-    pub fn write_char_string<L>(&mut self, s: impl AsRef<[u8]>, max_len: Option<L>) -> Result
-    where
-        L: num::Unsigned + num::Bounded + Into<usize> + Write,
-    {
+    pub fn write_char_string(&mut self, s: impl AsRef<[u8]>) -> Result {
         let s = s.as_ref();
         let len = s.len();
 
         // Ensure that the length label of the string doesn't exceed the maximum
         // value which can be encoded using a u8.
-        ensure!(len <= L::max_value().into(), LengthLabelOverflowSnafu);
-
-        // Ensure length is smaller than max_len
-        if let Some(max_len) = max_len {
-            ensure!(len <= max_len.into(), MaxLengthOverflowSnafu);
-        }
+        ensure!(len <= u8::MAX.into(), LengthLabelOverflowSnafu);
 
         let n = len.write_be(self)?;
         Ok(self.write(s) + n)
@@ -227,12 +215,12 @@ impl Writer {
         n
     }
 
-    /// Returns the content of [`WriteBuffer`] as a slice of bytes.
+    /// Returns the content of [`Writer`] as a slice of bytes.
     pub fn bytes(&self) -> &[u8] {
         self.buf.as_slice()
     }
 
-    /// Returns the content [`WriteBuffer`] as an owned vector of bytes.
+    /// Returns the content of [`Writer`] as an owned vector of bytes.
     pub fn owned_bytes(&self) -> Vec<u8> {
         self.buf.clone()
     }
