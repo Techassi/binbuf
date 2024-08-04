@@ -194,7 +194,6 @@ impl Writer {
     /// assert_eq!(b.len(), 5);
     /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
     /// ```
-    // FIXME (@Techassi): Remove the generic max_len because it is broken
     pub fn write_char_string(&mut self, s: impl AsRef<[u8]>, max_len: Option<u8>) -> Result {
         let s = s.as_ref();
         let len = s.len();
