@@ -1,3 +1,5 @@
+use std::{borrow::Cow, io::BufRead};
+
 use binbuf_macros::from_buffer_and_readable_impl;
 use snafu::{ensure, OptionExt, Snafu};
 
@@ -60,15 +62,15 @@ impl<'a> Reader<'a> {
         }
     }
 
-    /// Read a single byte from the front of the buffer. If the buffer is
+    /// Read a single byte from the front of the reader. If the reader is
     /// empty, an error is returned.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::{Buffer, Error};
+    /// use binbuf::read::{Reader, Error};
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.pop(), Ok(88));
@@ -83,8 +85,8 @@ impl<'a> Reader<'a> {
         BufferTooShortSnafu.fail()
     }
 
-    /// Pop off a byte from the front of the buffer without returning the byte.
-    /// This is rarely useful other than in combination with [`ReadBuffer::peek()`].
+    /// Pop off a byte from the front of the reader without returning the byte.
+    /// This is rarely useful other than in combination with [`Reader::peek()`].
     pub fn skip(&mut self) -> Result<()> {
         self.pop()?;
         Ok(())
@@ -94,9 +96,9 @@ impl<'a> Reader<'a> {
         self.rest = self.buf;
     }
 
-    /// Pop off `n` bytes from the front of the buffer but do not return the
+    /// Pop off `n` bytes from the front of the reader but do not return the
     /// popped off bytes. This is rarely useful other than in combination with
-    /// `peekn()`.
+    /// [`Reader::peekn()`].
     pub fn skipn(&mut self, n: usize) -> Result<()> {
         // Ensure the buffer is long enough to skip n bytes.
         ensure!(n <= self.len(), BufferTooShortSnafu);
@@ -111,15 +113,15 @@ impl<'a> Reader<'a> {
         Ok(())
     }
 
-    /// Peek the next byte of the buffer. If the buffer is empty
+    /// Peek the next byte of the reader. If the reader is empty
     /// [`None`] is returned.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69]);
+    /// let mut b = Reader::new(&[69]);
     ///
     /// assert_eq!(b.peek(), Some(69));
     /// assert_eq!(b.pop(), Ok(69));
@@ -129,15 +131,15 @@ impl<'a> Reader<'a> {
         self.rest.first().copied()
     }
 
-    /// Peek the next `n` bytes of the buffer. If the buffer is empty
+    /// Peek the next `n` bytes of the reader. If the reader is empty
     /// [`None`] is returned.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.peekn::<2>(), Some([69, 88]));
     /// assert_eq!(b.skipn(2), Ok(()));
@@ -156,7 +158,7 @@ impl<'a> Reader<'a> {
     /// Jumps back to offset `index`. Jumping beyond the current offset is not
     /// permitted and returns [`Error::InvalidJump`].
     pub fn jump_to(&mut self, index: usize) -> Result<()> {
-        // Ensure we don't jump to ann index larger than the currennt offset.
+        // Ensure we don't jump to an index larger than the current offset.
         ensure!(
             index <= self.offset(),
             InvalidJumpSnafu {
@@ -201,9 +203,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.offset(), 1);
@@ -212,14 +214,14 @@ impl<'a> Reader<'a> {
         self.buf.len() - self.rest.len()
     }
 
-    /// Returns the length of the remaining buffer.
+    /// Returns the length of the reader (in remaining bytes).
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.len(), 2);
     /// assert_eq!(b.pop(), Ok(69));
@@ -229,14 +231,14 @@ impl<'a> Reader<'a> {
         self.rest.len()
     }
 
-    /// Returns if the buffer is empty.
+    /// Returns if the reader is empty.
     ///
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69]);
+    /// let mut b = Reader::new(&[69]);
     ///
     /// assert_eq!(b.is_empty(), false);
     /// assert_eq!(b.pop(), Ok(69));
@@ -246,6 +248,7 @@ impl<'a> Reader<'a> {
         self.rest.is_empty()
     }
 
+    // TODO (@Techassi): Update doc comment
     /// Read a character string with an optional maximum length of `max_len`.
     /// A character string is composed of one byte indicating the number of
     /// bytes the string is made of. The string bytes then follow.
@@ -282,15 +285,62 @@ impl<'a> Reader<'a> {
     /// assert_eq!(b.read_char_string(Some(3)), Err(Error::MaxLengthOverflow));
     /// assert_eq!(b.len(), 8);
     /// ```
-    pub fn read_char_string(&mut self, max_len: Option<u8>) -> Result<&[u8]> {
-        let len = self.peek().context(BufferTooShortSnafu)? as usize;
+    pub fn read_char_string(&mut self) -> Result<&[u8]> {
+        self.read_char_string_with_max_len(u8::MAX)
+    }
 
-        if let Some(max_len) = max_len {
-            ensure!(len <= max_len.into(), MaxLengthOverflowSnafu);
-        }
+    pub fn read_char_string_with_max_len(&mut self, max_len: u8) -> Result<&[u8]> {
+        let len = self.peek().context(BufferTooShortSnafu)?;
+        ensure!(len <= max_len, MaxLengthOverflowSnafu);
 
         self.skip()?;
-        self.read_slice(len)
+        self.read_slice(len as usize)
+    }
+
+    pub fn read_string(&mut self, option: ReadStringOption) -> Result<Cow<'_, [u8]>> {
+        match option {
+            ReadStringOption::Sized(max_length) => match max_length {
+                Some(max_length) => {
+                    let len = self.peek().context(BufferTooShortSnafu)?;
+                    ensure!(len <= max_length, MaxLengthOverflowSnafu);
+
+                    self.skip()?;
+                    Ok(Cow::Borrowed(self.read_slice(len as usize)?))
+                }
+                None => {
+                    let len = self.peek().context(BufferTooShortSnafu)?;
+                    self.skip()?;
+                    Ok(Cow::Borrowed(self.read_slice(len as usize)?))
+                }
+            },
+            ReadStringOption::Terminated {
+                max_length,
+                terminator,
+            } => match max_length {
+                Some(max_length) => {
+                    let mut bytes = Vec::with_capacity(max_length as usize);
+
+                    loop {
+                        ensure!(bytes.len() < max_length as usize, MaxLengthOverflowSnafu);
+                        let b = self.pop()?;
+
+                        if b == terminator {
+                            break;
+                        }
+
+                        bytes.push(b);
+                    }
+
+                    Ok(Cow::Owned(bytes))
+                }
+                None => {
+                    let mut bytes = Vec::new();
+                    let _ = self.rest.read_until(terminator, &mut bytes);
+
+                    Ok(Cow::Owned(bytes))
+                }
+            },
+        }
     }
 
     /// Read a slice of bytes with the length `nbytes` from the buffer. If the
@@ -300,10 +350,10 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
     /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = Buffer::new(d);
+    /// let mut b = Reader::new(d);
     ///
     /// assert_eq!(b.read_slice(4), Ok(&[69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
@@ -322,10 +372,10 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
     /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = Buffer::new(d);
+    /// let mut b = Reader::new(d);
     ///
     /// assert_eq!(b.read_vec(4), Ok(vec![69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
@@ -471,3 +521,24 @@ from_buffer_and_readable_impl!(u32, 4);
 from_buffer_and_readable_impl!(u64, 8);
 from_buffer_and_readable_impl!(u128, 16);
 from_buffer_and_readable_impl!(usize, (usize::BITS / 8) as usize);
+
+pub enum ReadStringOption {
+    Sized(Option<u8>),
+    Terminated {
+        max_length: Option<u8>,
+        terminator: u8,
+    },
+}
+
+impl ReadStringOption {
+    pub fn sized(max_length: Option<u8>) -> Self {
+        Self::Sized(max_length)
+    }
+
+    pub fn terminated(terminator: u8, max_length: Option<u8>) -> Self {
+        Self::Terminated {
+            max_length,
+            terminator,
+        }
+    }
+}

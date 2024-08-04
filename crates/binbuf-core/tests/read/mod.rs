@@ -8,6 +8,8 @@ mod read_derive_struct;
 mod read_impl;
 mod read_multi;
 
+mod read_string;
+
 #[test]
 fn test_read_u8() {
     let data = &[69, 88, 65, 77, 80, 76, 69, 33];
@@ -70,7 +72,7 @@ fn test_read_char_string() {
     let b = &[8, 69, 88, 65, 77, 80, 76, 69, 33];
     let mut b = Reader::new(b);
 
-    match b.read_char_string(None) {
+    match b.read_char_string() {
         Ok(n) => assert_eq!(n, &[69, 88, 65, 77, 80, 76, 69, 33]),
         Err(err) => panic!("{}", err),
     }

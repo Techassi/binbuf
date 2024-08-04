@@ -1,9 +1,7 @@
 [workspace]
-members = [".", "crates/*"]
+members = ["crates/*"]
 
-[package]
-name = "binbuf"
-version = "0.0.1"
+[workspace.package]
 authors = ["Techassi <git@techassi.dev>"]
 categories = ["encoding", "parsing", "network-programming"]
 description = "binbuf is a small library to work with binary (network) data"
@@ -15,13 +13,5 @@ repository = "https://github.com/Techassi/binbuf"
 homepage = "https://github.com/Techassi/binbuf"
 exclude = ["tests/**/*", ".github/*", ".vscode/*", ".gitignore", "docs/**/*"]
 
-[features]
-full = ["derive", "macros"]
-derive = []
-macros = []
-
-[dependencies]
-binbuf-derive = { path = "crates/binbuf-derive", version = "0.0.1" }
-binbuf-macros = { path = "crates/binbuf-macros", version = "0.0.1" }
-
+[workspace.dependencies]
 snafu = "0.7.5"
