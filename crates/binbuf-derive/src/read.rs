@@ -82,7 +82,7 @@ fn expand_enum(
     let enum_attrs = RawContainerAttrs::parse::<EnumReadAttrs>(enum_attrs)?;
     let error: ExprPath = enum_attrs.error.parse()?;
     let repr: ExprPath = enum_attrs.repr.parse()?;
-    println!("{enum_attrs:?}");
+    // println!("{enum_attrs:?}");
 
     let read_inner = quote! {
         Self::try_from(#repr::read::<E>(buf)?)

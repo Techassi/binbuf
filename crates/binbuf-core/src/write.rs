@@ -7,12 +7,15 @@ use crate::Endianness;
 
 pub type Result<T = usize, E = WriteError> = std::result::Result<T, E>;
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, PartialEq, Snafu)]
 pub enum WriteError {
     #[snafu(display(
         "the length of the character string oveflows the max value encodable using an u8"
     ))]
     LengthLabelOverflow,
+
+    #[snafu(display("max buffer length overflow"))]
+    MaxLengthOverflow,
 
     #[snafu(display("non-ascii string data cannot be written"))]
     NonAsciiData,
@@ -190,14 +193,19 @@ impl Writer {
     /// assert_eq!(b.len(), 5);
     /// assert_eq!(b.bytes(), &[4, 88, 65, 77, 80]);
     /// ```
-    // FIXME (@Techassi): Remove the generic max_len because it is broken
-    pub fn write_char_string(&mut self, s: impl AsRef<[u8]>) -> Result {
+    pub fn write_char_string(&mut self, s: impl AsRef<[u8]>, max_len: Option<u8>) -> Result {
         let s = s.as_ref();
         let len = s.len();
 
         // Ensure that the length label of the string doesn't exceed the maximum
         // value which can be encoded using a u8.
         ensure!(len <= u8::MAX.into(), LengthLabelOverflowSnafu);
+        let len = len as u8;
+
+        // Ensure length is smaller than max_len
+        if let Some(max_len) = max_len {
+            ensure!(len <= max_len, MaxLengthOverflowSnafu);
+        }
 
         let n = len.write_be(self)?;
         Ok(self.write(s) + n)
