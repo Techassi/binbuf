@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::{Error, ExprPath, LitStr, Result};
+use syn::ExprPath;
 
 /// This generates a single read function call.
 pub fn gen_read_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
@@ -19,7 +19,7 @@ pub fn gen_default_func(var_name: &Ident, field_type: &Ident) -> TokenStream {
 pub fn gen_readable_impl(
     struct_name: &Ident,
     read_inner: TokenStream,
-    error: ExprPath,
+    _error: ExprPath,
 ) -> TokenStream {
     let doc_header = format!(" Read [`{struct_name}`] from a [`ReadBuffer`].");
     let doc_func = format!(
@@ -46,32 +46,4 @@ pub fn gen_readable_impl(
             }
         }
     }
-}
-
-pub fn gen_readable_verify_impl(struct_name: &Ident, endianness: LitStr) -> Result<TokenStream> {
-    if endianness.value().is_empty() {
-        return Ok(quote! {});
-    }
-
-    let supported_endianness = match endianness.value().as_str() {
-        "little" => quote! { binbuf::SupportedEndianness::LittleEndian },
-        "big" => quote! { binbuf::SupportedEndianness::BigEndian },
-        "both" => quote! { binbuf::SupportedEndianness::Both },
-        _ => {
-            return Err(Error::new(
-                endianness.span(),
-                format!(
-                    "Invalid supported endianness - expected 'big', 'little' or 'both', got {}",
-                    endianness.value()
-                ),
-            ))
-        }
-    };
-
-    Ok(quote! {
-        #[automatically_derived]
-        impl binbuf::read::ReadableVerify for #struct_name {
-            const SUPPORTED_ENDIANNESS: binbuf::SupportedEndianness = #supported_endianness;
-        }
-    })
 }

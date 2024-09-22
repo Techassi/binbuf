@@ -7,12 +7,12 @@ mod write;
 pub use read::*;
 pub use write::*;
 
-#[derive(Debug)]
-pub struct TyEntry {
-    pub idents: Vec<Ident>,
-    pub count: usize,
-    pub ty: Ident,
-}
+// #[derive(Debug)]
+// pub struct TyEntry {
+//     pub idents: Vec<Ident>,
+//     pub count: usize,
+//     pub ty: Ident,
+// }
 
 /// Checks if the provided [`Data`] is a struct and if yes, returns the struct
 /// data as [`DataStruct`].

@@ -1,4 +1,3 @@
-use binbuf_macros::from_buffer_and_readable_impl;
 use snafu::{ensure, OptionExt, Snafu};
 
 use crate::{BigEndian, Endianness, LittleEndian};

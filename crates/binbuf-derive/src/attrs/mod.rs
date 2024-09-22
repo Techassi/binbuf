@@ -1,6 +1,6 @@
 use proc_macro2::Span;
 use structmeta::StructMeta;
-use syn::{parse::Parse, spanned::Spanned, Attribute, Error, LitBool, LitInt, LitStr};
+use syn::{parse::Parse, spanned::Spanned, Attribute, Error, LitBool, LitStr};
 
 mod enums;
 mod structs;

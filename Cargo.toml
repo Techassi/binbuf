@@ -22,6 +22,5 @@ macros = []
 
 [dependencies]
 binbuf-derive = { path = "crates/binbuf-derive", version = "0.0.1" }
-binbuf-macros = { path = "crates/binbuf-macros", version = "0.0.1" }
 
 snafu = "0.7.5"

@@ -1,8 +1,7 @@
 #[cfg(feature = "macros")]
 #[test]
 fn test_write_macro() {
-    use binbuf::{write::Result, BigEndian, Endianness, Write, Writer};
-    use binbuf_macros::bytes_written;
+    use binbuf::{bytes_written, write::Result, BigEndian, Endianness, Write, Writer};
 
     let mut b = Writer::new();
 
