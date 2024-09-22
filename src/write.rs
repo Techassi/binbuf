@@ -256,7 +256,6 @@ into_buffer_and_writeable_impl!(u16, 2);
 into_buffer_and_writeable_impl!(u32, 4);
 into_buffer_and_writeable_impl!(u64, 8);
 into_buffer_and_writeable_impl!(u128, 16);
-into_buffer_and_writeable_impl!(usize, (usize::BITS / 8) as usize);
 
 impl<T: Write> Write for Vec<T> {
     fn write<E: Endianness>(&self, buf: &mut Writer) -> Result {
