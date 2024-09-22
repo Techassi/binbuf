@@ -36,9 +36,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::{BigEndian, Write as _, Writer};
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// 17752u16.write::<BigEndian>(&mut b).unwrap();
     ///
     /// assert_eq!(b.len(), 2);
@@ -55,9 +55,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new_with([69, 88]);
+    /// let mut b = Writer::new_with([69, 88]);
     /// assert_eq!(b.bytes(), &[69, 88]);
     /// ```
     pub fn new_with<T: AsRef<[u8]>>(b: T) -> Self {
@@ -76,9 +76,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// b.push(69);
     ///
     /// assert_eq!(b.len(), 1);
@@ -97,9 +97,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new_with([69, 88]);
+    /// let mut b = Writer::new_with([69, 88]);
     /// b.clear();
     ///
     /// assert_eq!(b.len(), 0);
@@ -113,9 +113,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new_with([69, 88]);
+    /// let mut b = Writer::new_with([69, 88]);
     /// assert_eq!(b.len(), 2);
     /// ```
     pub fn len(&self) -> usize {
@@ -127,9 +127,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// assert_eq!(b.is_empty(), true);
     ///
     /// b.push(69);
@@ -145,9 +145,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// b.write(vec![69, 88, 65]);
     ///
     /// assert_eq!(b.len(), 3);
@@ -186,9 +186,9 @@ impl Writer {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::write::Buffer;
+    /// use binbuf::Writer;
     ///
-    /// let mut b = Buffer::new();
+    /// let mut b = Writer::new();
     /// b.write_char_string(&[88, 65, 77, 80], None).unwrap();
     ///
     /// assert_eq!(b.len(), 5);

@@ -18,8 +18,10 @@
 //! ## Reading Simple Data Types
 //!
 //! ```rust
+//! # use binbuf::*;
+//!
 //! let b = &[69, 88, 65, 77, 80, 76, 69, 33];
-//! let mut b = ReadBuffer::new(b);
+//! let mut b = Reader::new(b);
 //!
 //! match u16::read::<BigEndian>(&mut b) {
 //!     Ok(n) => assert_eq!(n, 17752),
