@@ -7,7 +7,7 @@ binbuf (short for *binary buffers*) is a small library to work with binary (netw
 
 ### Reading basic types
 
-The library provides multiple methods to read basic data types like `u8`, `u16`, `u32`, `u64`, `u128`, `usize`,
+The library provides multiple methods to read basic data types like `u8`, `u16`, `u32`, `u64`, `u128`,
 `Ipv4Addr`, and `Ipv6Addr` in big and little-endian byte order.
 
 ```rust
