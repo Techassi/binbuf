@@ -470,4 +470,3 @@ from_buffer_and_readable_impl!(u16, 2);
 from_buffer_and_readable_impl!(u32, 4);
 from_buffer_and_readable_impl!(u64, 8);
 from_buffer_and_readable_impl!(u128, 16);
-from_buffer_and_readable_impl!(usize, (usize::BITS / 8) as usize);
