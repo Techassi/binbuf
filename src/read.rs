@@ -66,9 +66,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::{Buffer, Error};
+    /// use binbuf::{Reader, read::Error};
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.pop(), Ok(88));
@@ -117,9 +117,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69]);
+    /// let mut b = Reader::new(&[69]);
     ///
     /// assert_eq!(b.peek(), Some(69));
     /// assert_eq!(b.pop(), Ok(69));
@@ -135,9 +135,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.peekn::<2>(), Some([69, 88]));
     /// assert_eq!(b.skipn(2), Ok(()));
@@ -201,9 +201,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.pop(), Ok(69));
     /// assert_eq!(b.offset(), 1);
@@ -217,9 +217,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69, 88]);
+    /// let mut b = Reader::new(&[69, 88]);
     ///
     /// assert_eq!(b.len(), 2);
     /// assert_eq!(b.pop(), Ok(69));
@@ -234,9 +234,9 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
-    /// let mut b = Buffer::new(&[69]);
+    /// let mut b = Reader::new(&[69]);
     ///
     /// assert_eq!(b.is_empty(), false);
     /// assert_eq!(b.pop(), Ok(69));
@@ -262,22 +262,22 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
     /// let d = &[4, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = Buffer::new(d);
+    /// let mut b = Reader::new(d);
     ///
-    /// assert_eq!(b.read_char_string(None), Ok(&[88, 65, 77, 80]));
+    /// assert_eq!(b.read_char_string(None), Ok([88, 65, 77, 80].as_slice()));
     /// assert_eq!(b.len(), 3);
     /// ```
     ///
     /// ### Example with a maximum length
     ///
     /// ```
-    /// use binbuf::read::{Buffer, Error};
+    /// use binbuf::{Reader, read::Error};
     ///
     /// let d = &[4, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = Buffer::new(d);
+    /// let mut b = Reader::new(d);
     ///
     /// assert_eq!(b.read_char_string(Some(3)), Err(Error::MaxLengthOverflow));
     /// assert_eq!(b.len(), 8);
@@ -300,12 +300,12 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
     /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = Buffer::new(d);
+    /// let mut b = Reader::new(d);
     ///
-    /// assert_eq!(b.read_slice(4), Ok(&[69, 88, 65, 77]));
+    /// assert_eq!(b.read_slice(4), Ok([69, 88, 65, 77].as_slice()));
     /// assert_eq!(b.len(), 4);
     /// ```
     pub fn read_slice(&mut self, nbytes: usize) -> Result<&[u8]> {
@@ -322,10 +322,10 @@ impl<'a> Reader<'a> {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::read::Buffer;
+    /// use binbuf::Reader;
     ///
     /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = Buffer::new(d);
+    /// let mut b = Reader::new(d);
     ///
     /// assert_eq!(b.read_vec(4), Ok(vec![69, 88, 65, 77]));
     /// assert_eq!(b.len(), 4);
@@ -342,10 +342,10 @@ impl<'a> Reader<'a> {
 /// ### Example
 ///
 /// ```
-/// use binbuf::{BigEndian, read::{Buffer, Readable}};
+/// use binbuf::{BigEndian, Reader, Read as _};
 ///
 /// let d = &[69, 88, 65, 77, 80, 76, 69, 33];
-/// let mut b = Buffer::new(d);
+/// let mut b = Reader::new(d);
 ///
 /// assert_eq!(u16::read::<BigEndian>(&mut b), Ok(17752));
 /// ```
@@ -355,7 +355,7 @@ pub trait Read: Sized {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::{BigEndian, Reader, Read as _};
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
     /// let mut r = Reader::new(d.as_slice());
@@ -375,10 +375,10 @@ pub trait Read: Sized {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::{Reader, Read as _};
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Reader::new(d.as_slice());
     ///
     /// let i = u16::read_be(&mut b).unwrap();
     /// assert_eq!(i, 17752);
@@ -397,10 +397,10 @@ pub trait Read: Sized {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::{Reader, Read as _};
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Reader::new(d.as_slice());
     ///
     /// let i = u16::read_le(&mut b).unwrap();
     /// assert_eq!(i, 22597);
@@ -418,10 +418,10 @@ pub trait Read: Sized {
 /// ### Example
 ///
 /// ```
-/// use binbuf::prelude::*;
+/// use binbuf::{BigEndian, Reader, ReadableMulti as _};
 ///
 /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-/// let mut b = ReadBuffer::new(d.as_slice());
+/// let mut b = Reader::new(d.as_slice());
 ///
 /// let [i1, i2] = u16::read_multi::<BigEndian, 2>(&mut b).unwrap();
 ///
@@ -434,10 +434,10 @@ pub trait ReadableMulti: Read + Default + Copy {
     /// ### Example
     ///
     /// ```
-    /// use binbuf::prelude::*;
+    /// use binbuf::{BigEndian, Reader, ReadableMulti as _};
     ///
     /// let d = vec![69, 88, 65, 77, 80, 76, 69, 33];
-    /// let mut b = ReadBuffer::new(d.as_slice());
+    /// let mut b = Reader::new(d.as_slice());
     ///
     /// let [i1, i2, i3, i4] = u16::read_multi::<BigEndian, 4>(&mut b).unwrap();
     ///
