@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use binbuf_macros::into_buffer_and_writeable_impl;
 use snafu::{ensure, Snafu};
 
 use crate::Endianness;

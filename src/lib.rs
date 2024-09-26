@@ -30,6 +30,12 @@
 //! ```
 
 mod impls;
+
+// macro_use is used here to enable the usage of macro_rules not marked with
+// macro_export in this crate.
+#[macro_use]
+mod macros;
+
 pub mod read;
 pub mod write;
 
@@ -69,8 +75,3 @@ impl Endianness for LittleEndian {
 
 #[cfg(feature = "derive")]
 pub use binbuf_derive::{Read, Write};
-
-#[cfg(feature = "macros")]
-pub mod macros {
-    pub use binbuf_macros::bytes_written;
-}

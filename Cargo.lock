@@ -7,7 +7,6 @@ name = "binbuf"
 version = "0.0.1"
 dependencies = [
  "binbuf-derive",
- "binbuf-macros",
  "snafu",
 ]
 
@@ -20,10 +19,6 @@ dependencies = [
  "structmeta",
  "syn",
 ]
-
-[[package]]
-name = "binbuf-macros"
-version = "0.0.1"
 
 [[package]]
 name = "doc-comment"

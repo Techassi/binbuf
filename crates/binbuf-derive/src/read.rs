@@ -152,47 +152,47 @@ fn gen_from_repr_impl_enum(
     })
 }
 
-fn gen_from_enum_impl_repr(
-    enum_name: &Ident,
-    enum_data: &DataEnum,
-    enum_attrs: &EnumReadAttrs,
-) -> SynResult<TokenStream> {
-    let repr: ExprPath = enum_attrs.repr.parse()?;
-    let repr_type = repr.path.get_ident().unwrap().to_string();
+// fn gen_from_enum_impl_repr(
+//     enum_name: &Ident,
+//     enum_data: &DataEnum,
+//     enum_attrs: &EnumReadAttrs,
+// ) -> SynResult<TokenStream> {
+//     let repr: ExprPath = enum_attrs.repr.parse()?;
+//     let repr_type = repr.path.get_ident().unwrap().to_string();
 
-    let mut variants: Vec<TokenStream> = Vec::new();
+//     let mut variants: Vec<TokenStream> = Vec::new();
 
-    for (index, variant) in (0_u128..).zip((&enum_data.variants).into_iter()) {
-        let variant_ident = &variant.ident;
-        let variant_value = match repr_type.as_str() {
-            "u8" => Literal::u8_suffixed(index as u8),
-            "u16" => Literal::u16_suffixed(index as u16),
-            "u32" => Literal::u32_suffixed(index as u32),
-            "u64" => Literal::u64_suffixed(index as u64),
-            "u128" => Literal::u128_suffixed(index),
-            _ => {
-                return Err(Error::new(
-                    variant.span(),
-                    "Invalid variant representation type",
-                ))
-            }
-        };
+//     for (index, variant) in (0_u128..).zip((&enum_data.variants).into_iter()) {
+//         let variant_ident = &variant.ident;
+//         let variant_value = match repr_type.as_str() {
+//             "u8" => Literal::u8_suffixed(index as u8),
+//             "u16" => Literal::u16_suffixed(index as u16),
+//             "u32" => Literal::u32_suffixed(index as u32),
+//             "u64" => Literal::u64_suffixed(index as u64),
+//             "u128" => Literal::u128_suffixed(index),
+//             _ => {
+//                 return Err(Error::new(
+//                     variant.span(),
+//                     "Invalid variant representation type",
+//                 ))
+//             }
+//         };
 
-        variants.push(quote! {
-            #enum_name::#variant_ident => #variant_value,
-        });
-    }
+//         variants.push(quote! {
+//             #enum_name::#variant_ident => #variant_value,
+//         });
+//     }
 
-    Ok(quote! {
-        impl From<#enum_name> for #repr {
-            fn from(value: #enum_name) -> Self {
-                match value {
-                    #(#variants)*
-                }
-            }
-        }
-    })
-}
+//     Ok(quote! {
+//         impl From<#enum_name> for #repr {
+//             fn from(value: #enum_name) -> Self {
+//                 match value {
+//                     #(#variants)*
+//                 }
+//             }
+//         }
+//     })
+// }
 
 /// This generates code when there are multiple named fields in the struct.
 fn gen_struct_fields(fields: Punctuated<Field, Comma>) -> SynResult<TokenStream> {
